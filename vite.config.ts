@@ -2,11 +2,15 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // https://vitejs.dev/config/
+//
+// base:
+//  - GitHub Pages sirve el sitio en una subruta (/vigolo-lead-radar/), por eso
+//    el build de Pages usa ese base. El workflow lo setea con VITE_BASE.
+//  - En Vercel / dominio raiz, base = '/' (default).
+//  Nota: el base absoluto ('/vigolo-lead-radar/') es mas robusto que './' en
+//  GitHub Pages (evita problemas de rutas y de subpaths).
 export default defineConfig({
-  // base relativo: los assets se referencian con rutas relativas, asi la app
-  // funciona tanto en Vercel (dominio raiz) como en GitHub Pages (subruta
-  // tipo /vigolo-lead-radar/). No requiere tocar nada al deployar.
-  base: './',
+  base: process.env.VITE_BASE || '/',
   plugins: [react()],
   server: {
     host: true,
