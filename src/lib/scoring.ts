@@ -1,168 +1,147 @@
 // =====================================================================
-// Motor de puntaje de oportunidad
+// Motor de Score Inteligente (v2)
 // ---------------------------------------------------------------------
-// Traduce las senales de un negocio (web, instagram, resenas, rubro)
-// en: presencia digital + puntaje 1-100 + motivo legible.
-//
-// Criterios (segun brief comercial de Vigolo):
-//   - Sin pagina web                          => oportunidad ALTA
-//   - Web vieja / poco profesional            => oportunidad ALTA
-//   - Instagram activo pero sin web           => oportunidad ALTA
-//   - Muchas resenas en Google pero sin web   => oportunidad ALTA
-//   - Rubros donde una web genera consultas
-//     por WhatsApp                            => oportunidad ALTA
+// Algoritmo ponderado sobre ~20 factores. Un puntaje ALTO = mejor
+// oportunidad comercial para venderle a ese negocio (web, automatización,
+// marketing, posicionamiento). Devuelve el desglose factor por factor.
 // =====================================================================
 
-import type { DigitalPresence, OpportunityLevel } from '../types'
+import type {
+  BusinessSignals,
+  DigitalPresence,
+  OpportunityLevel,
+  ScoreFactor,
+  ScoreResult,
+} from '../types'
 
-/** Senales crudas que alimentan el scoring. */
-export interface ScoringInput {
-  category: string
-  website?: string
-  /**
-   * Pista de calidad de la web cuando existe. La API real puede inferirla
-   * (Lighthouse, mobile-friendly, etc.). En mock viene precargada.
-   */
-  websiteQuality?: 'vieja' | 'aceptable'
-  instagram?: string
-  hasActiveInstagram?: boolean
-  reviewsCount?: number
-  rating?: number
-}
-
-export interface ScoringResult {
-  digitalPresence: DigitalPresence
-  score: number
-  scoreReason: string
-}
-
-/**
- * Rubros donde una web profesional suele traducirse directo en consultas
- * por WhatsApp / turnos. Suman prioridad comercial.
- */
-const HIGH_INTENT_CATEGORIES = [
-  'barberia',
-  'barberias',
-  'peluqueria',
-  'peluquerias',
-  'gimnasio',
-  'gimnasios',
-  'estetica',
-  'esteticas',
-  'restaurante',
-  'restaurantes',
-  'cafeteria',
-  'cafeterias',
-  'inmobiliaria',
-  'inmobiliarias',
-  'electricista',
-  'electricistas',
-  'ferreteria',
-  'ferreterias',
-  'odontologia',
-  'consultorio',
-  'estudio juridico',
-  'estudio contable',
+const HIGH_INTENT = [
+  'barberia', 'peluqueria', 'gimnasio', 'estetica', 'spa', 'restaurante',
+  'cafeteria', 'bar', 'inmobiliaria', 'electricista', 'plomero', 'ferreteria',
+  'odontologia', 'consultorio', 'abogado', 'contador', 'veterinaria',
+  'inmobiliario', 'turismo', 'hotel', 'indumentaria', 'automotor',
 ]
-
-const REVIEWS_MANY = 40 // umbral de "muchas resenas"
-const REVIEWS_SOME = 12
 
 function normalize(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // saca acentos
+    .replace(/[\u0300-\u036f]/g, '')
     .trim()
 }
 
-function isHighIntentCategory(category: string): boolean {
+export function isHighIntentCategory(category: string): boolean {
   const c = normalize(category)
-  return HIGH_INTENT_CATEGORIES.some((k) => c.includes(normalize(k)))
+  return HIGH_INTENT.some((k) => c.includes(k))
 }
 
-/** Determina el estado de presencia digital a partir de las senales. */
-export function computeDigitalPresence(input: ScoringInput): DigitalPresence {
-  const hasWebsite = Boolean(input.website && input.website.trim())
-  if (!hasWebsite) return 'sin-web'
-  if (input.websiteQuality === 'vieja') return 'web-vieja'
-  if (input.websiteQuality === 'aceptable') return 'web-aceptable'
+export function computeDigitalPresence(s: BusinessSignals): DigitalPresence {
+  if (!s.website || !s.website.trim()) return 'sin-web'
+  if (s.websiteQuality === 'vieja') return 'web-vieja'
+  if (s.websiteQuality === 'aceptable') return 'web-aceptable'
   return 'buen-potencial'
 }
 
-/**
- * Calcula puntaje (1-100) + motivo. Un puntaje mas alto = mejor oportunidad
- * comercial para vender una pagina web.
- */
-export function computeScore(input: ScoringInput): ScoringResult {
-  const presence = computeDigitalPresence(input)
-  const reasons: string[] = []
-  let score = 30 // piso base
-
-  const hasWebsite = presence !== 'sin-web'
-  const hasInstagram = Boolean(input.instagram && input.instagram.trim())
-  const reviews = input.reviewsCount ?? 0
-
-  // 1) Presencia web: el driver mas fuerte
-  switch (presence) {
-    case 'sin-web':
-      score += 45
-      reasons.push('No tiene pagina web')
-      break
-    case 'web-vieja':
-      score += 32
-      reasons.push('Tiene una web vieja o poco profesional')
-      break
-    case 'web-aceptable':
-      score += 8
-      reasons.push('Web aceptable, hay margen de mejora')
-      break
-    case 'buen-potencial':
-      score += 2
-      reasons.push('Ya tiene buena presencia web')
-      break
-  }
-
-  // 2) Instagram activo pero sin web => senal caliente
-  if (hasInstagram && input.hasActiveInstagram && !hasWebsite) {
-    score += 15
-    reasons.push('Instagram activo pero sin web')
-  } else if (hasInstagram && !hasWebsite) {
-    score += 8
-    reasons.push('Tiene Instagram pero no web')
-  }
-
-  // 3) Google Business con muchas resenas pero sin web
-  if (reviews >= REVIEWS_MANY && !hasWebsite) {
-    score += 14
-    reasons.push(`${reviews} resenas en Google y sin web`)
-  } else if (reviews >= REVIEWS_SOME && !hasWebsite) {
-    score += 8
-    reasons.push(`${reviews} resenas en Google`)
-  } else if (reviews >= REVIEWS_MANY) {
-    score += 4
-    reasons.push(`Negocio con traccion (${reviews} resenas)`)
-  }
-
-  // 4) Rubro de alta intencion (web => consultas por WhatsApp)
-  if (isHighIntentCategory(input.category)) {
-    score += 8
-    reasons.push('Rubro ideal para captar consultas por WhatsApp')
-  }
-
-  // Clamp 1-100
-  score = Math.max(1, Math.min(100, Math.round(score)))
-
-  return {
-    digitalPresence: presence,
-    score,
-    scoreReason: reasons.join('. ') + '.',
-  }
-}
-
-/** Deriva el nivel de oportunidad desde el puntaje numerico. */
-export function opportunityLevel(score: number): OpportunityLevel {
+export function levelFromScore(score: number): OpportunityLevel {
   if (score >= 70) return 'alta'
   if (score >= 45) return 'media'
   return 'baja'
+}
+
+/**
+ * Calcula el score de oportunidad. `presenceWeight` alto cuando el negocio
+ * tiene tracción (reseñas/rating/redes) pero mala/nula presencia web.
+ */
+export function computeScore(
+  signals: BusinessSignals,
+  category: string,
+): ScoreResult {
+  const presence = computeDigitalPresence(signals)
+  const f: ScoreFactor[] = []
+  const push = (key: string, label: string, points: number, detail: string) =>
+    f.push({ key, label, points, detail })
+
+  const hasWeb = presence !== 'sin-web'
+  const reviews = signals.reviewsCount ?? 0
+  const rating = signals.rating ?? 0
+
+  // 1) Presencia web (driver principal)
+  switch (presence) {
+    case 'sin-web':
+      push('web', 'Sin sitio web', 34, 'No tiene web: máxima oportunidad de venta.')
+      break
+    case 'web-vieja':
+      push('web', 'Web vieja', 26, 'Web desactualizada / poco profesional.')
+      break
+    case 'web-aceptable':
+      push('web', 'Web aceptable', 10, 'Web correcta pero mejorable.')
+      break
+    case 'buen-potencial':
+      push('web', 'Buena web', 2, 'Ya tiene buena presencia web.')
+      break
+  }
+
+  // 2) Tracción de negocio (reseñas) — demanda real que hoy no capitaliza
+  if (reviews >= 100) push('reviews', 'Mucha tracción', 12, `${reviews} reseñas en Google.`)
+  else if (reviews >= 40) push('reviews', 'Buena tracción', 9, `${reviews} reseñas en Google.`)
+  else if (reviews >= 12) push('reviews', 'Tracción media', 5, `${reviews} reseñas en Google.`)
+  else push('reviews', 'Poca tracción', 1, 'Pocas reseñas en Google.')
+
+  // 3) Reputación (rating alto = negocio que "convierte" si le das canal)
+  if (rating >= 4.5) push('rating', 'Excelente reputación', 8, `Rating ${rating.toFixed(1)}★: le sobra demanda.`)
+  else if (rating >= 4.0) push('rating', 'Buena reputación', 5, `Rating ${rating.toFixed(1)}★.`)
+  else if (rating > 0) push('rating', 'Reputación media', 2, `Rating ${rating.toFixed(1)}★.`)
+
+  // 4) Instagram activo sin web = señal caliente
+  const hasIg = Boolean(signals.instagram)
+  if (hasIg && signals.hasActiveInstagram && !hasWeb)
+    push('ig', 'Instagram activo, sin web', 12, 'Invierte en redes pero no tiene dónde convertir.')
+  else if (hasIg && !hasWeb)
+    push('ig', 'Instagram sin web', 7, 'Tiene Instagram pero no web.')
+  else if (hasIg && signals.hasActiveInstagram)
+    push('ig', 'Instagram activo', 3, 'Marca activa en redes.')
+
+  // 5) Facebook / LinkedIn (presencia social adicional)
+  if (signals.facebook && !hasWeb)
+    push('fb', 'Facebook sin web', 4, 'Presencia en Facebook sin sitio propio.')
+
+  // 6) WhatsApp disponible = canal directo para vender la solución
+  if (signals.whatsapp) push('wsp', 'Tiene WhatsApp', 4, 'Canal directo para prospectar.')
+  else if (signals.phone) push('phone', 'Tiene teléfono', 2, 'Se puede contactar por teléfono.')
+
+  // 7) Verificado en Google (negocio establecido)
+  if (signals.verified) push('verified', 'Negocio verificado', 3, 'Perfil de Google verificado.')
+
+  // 8) Rubro de alta intención (una web se traduce en consultas)
+  if (isHighIntentCategory(category))
+    push('rubro', 'Rubro de alta conversión', 8, 'Una web genera consultas directas por WhatsApp.')
+
+  // 9) HTTPS / dominio (penaliza si tiene web sin https)
+  if (hasWeb && signals.website && !signals.website.startsWith('https'))
+    push('https', 'Web sin HTTPS', 3, 'Sitio inseguro (sin candado): urge migrar.')
+
+  const raw = f.reduce((sum, x) => sum + x.points, 0)
+  const score = Math.max(1, Math.min(100, Math.round(30 + raw)))
+  const level = levelFromScore(score)
+
+  const headline =
+    presence === 'sin-web'
+      ? `Sin web con ${reviews} reseñas: oportunidad ${level}.`
+      : presence === 'web-vieja'
+        ? `Web desactualizada y ${reviews} reseñas: oportunidad ${level}.`
+        : `Presencia digital ${DIGITAL_LABEL[presence]}: oportunidad ${level}.`
+
+  return {
+    score,
+    level,
+    digitalPresence: presence,
+    factors: f.sort((a, b) => b.points - a.points),
+    headline,
+  }
+}
+
+const DIGITAL_LABEL: Record<DigitalPresence, string> = {
+  'sin-web': 'inexistente',
+  'web-vieja': 'vieja',
+  'web-aceptable': 'aceptable',
+  'buen-potencial': 'buena',
 }

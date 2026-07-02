@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import 'leaflet/dist/leaflet.css';
+
 :root {
   color-scheme: dark;
 }
@@ -18,10 +20,9 @@ body {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Glow sutil de fondo tipo SaaS */
   background-image:
-    radial-gradient(60rem 60rem at 85% -10%, rgba(62, 166, 255, 0.08), transparent 60%),
-    radial-gradient(50rem 50rem at -10% 110%, rgba(62, 166, 255, 0.06), transparent 60%);
+    radial-gradient(55rem 55rem at 80% -15%, rgba(62, 166, 255, 0.10), transparent 60%),
+    radial-gradient(45rem 45rem at -10% 110%, rgba(139, 92, 246, 0.08), transparent 60%);
   background-attachment: fixed;
 }
 
@@ -37,4 +38,21 @@ body {
 *::-webkit-scrollbar-thumb {
   background-color: rgba(255, 255, 255, 0.15);
   border-radius: 9999px;
+}
+
+/* Leaflet en dark mode */
+.leaflet-container {
+  background: #0a0f24;
+  font-family: inherit;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #0e1430;
+  color: #e2e8f0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.leaflet-bar a {
+  background: #131a3a;
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.1);
 }

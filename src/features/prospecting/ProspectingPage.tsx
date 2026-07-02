@@ -1,0 +1,78 @@
+import { useState } from 'react'
+import { AppShell } from '../../components/layout/AppShell'
+import { Field, Input, Select, EmptyState } from '../../components/ui/primitives'
+import { ExportMenu } from '../../components/leads/ExportMenu'
+import { SearchFilters } from './SearchFilters'
+import { LeadCard } from '../leads/LeadCard'
+import { useFilteredLeads, useCategories, useZones } from '../../hooks/useFilteredLeads'
+import { useLeadStore } from '../../store/useLeadStore'
+import { OPPORTUNITY_LABEL } from '../../lib/labels'
+import type { OpportunityLevel } from '../../types'
+
+export function ProspectingPage() {
+  const filtered = useFilteredLeads()
+  const categories = useCategories()
+  const zones = useZones()
+  const { filters, setFilters, resetFilters } = useLeadStore()
+  const [feedback, setFeedback] = useState<string | null>(null)
+
+  return (
+    <AppShell title="Prospección" subtitle="Encontrá negocios y detectá oportunidades">
+      <SearchFilters
+        onDone={(n) =>
+          setFeedback(n > 0 ? `Se encontraron ${n} negocios.` : 'Sin resultados con esos criterios.')
+        }
+      />
+      {feedback && (
+        <p className="rounded-lg bg-electric-500/10 px-3 py-2 text-xs text-electric-200 ring-1 ring-inset ring-electric-400/20">
+          {feedback}
+        </p>
+      )}
+
+      {/* Filtros locales */}
+      <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+          <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Field label="Buscar por nombre">
+              <Input value={filters.query} onChange={(e) => setFilters({ query: e.target.value })} placeholder="Nombre…" />
+            </Field>
+            <Field label="Rubro">
+              <Select value={filters.category} onChange={(e) => setFilters({ category: e.target.value })}>
+                <option value="">Todos</option>
+                {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </Select>
+            </Field>
+            <Field label="Zona">
+              <Select value={filters.zone} onChange={(e) => setFilters({ zone: e.target.value })}>
+                <option value="">Todas</option>
+                {zones.map((z) => <option key={z} value={z}>{z}</option>)}
+              </Select>
+            </Field>
+            <Field label="Oportunidad">
+              <Select value={filters.opportunity} onChange={(e) => setFilters({ opportunity: e.target.value as OpportunityLevel | '' })}>
+                <option value="">Todas</option>
+                {(['alta', 'media', 'baja'] as const).map((o) => <option key={o} value={o}>{OPPORTUNITY_LABEL[o]}</option>)}
+              </Select>
+            </Field>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={resetFilters} className="text-xs text-slate-400 hover:text-slate-200">Limpiar</button>
+            <ExportMenu leads={filtered} />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-slate-400">{filtered.length} negocios</p>
+      </div>
+
+      {filtered.length === 0 ? (
+        <EmptyState title="Sin resultados" subtitle="Ajustá los filtros o hacé un nuevo sondeo." />
+      ) : (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {filtered.map((l) => <LeadCard key={l.id} lead={l} />)}
+        </div>
+      )}
+    </AppShell>
+  )
+}
