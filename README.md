@@ -82,6 +82,31 @@ cp .env.example .env
 
 ---
 
+## ☁️ Deploy
+
+La app es **100% estática** (build a `dist/`) y usa `base: './'` en
+`vite.config.ts`, así que anda tanto en la raíz de un dominio (Vercel) como
+en una subruta (GitHub Pages) sin cambios.
+
+### Opción A — Vercel (recomendada)
+
+1. Importá el repo en [vercel.com/new](https://vercel.com/new).
+2. Vercel detecta Vite solo. Confirmá:
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+3. (Opcional) Cargá las variables `VITE_*` en _Settings → Environment Variables_.
+4. Deploy. Cada push a `main` redeploya automáticamente.
+
+### Opción B — GitHub Pages (automático)
+
+Ya viene un workflow en `.github/workflows/deploy.yml`:
+
+1. En el repo: **Settings → Pages → Source = "GitHub Actions"**.
+2. Cada push a `main` buildea y publica solo.
+3. La app queda en `https://<usuario>.github.io/<repo>/`.
+
+---
+
 ## 🧩 Estructura del proyecto
 
 ```
