@@ -1,7 +1,10 @@
 name: Deploy a GitHub Pages
 
 # Deploya la app a GitHub Pages en cada push a main.
-# Requisito: en el repo, Settings > Pages > Source = "GitHub Actions".
+# El propio workflow habilita Pages (source = GitHub Actions) via
+# actions/configure-pages con enablement: true, asi no hace falta tocar
+# la UI. Si la org bloquea esa habilitacion automatica, activarlo a mano en
+# Settings > Pages > Source = "GitHub Actions".
 
 on:
   push:
@@ -23,6 +26,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Habilita Pages con source = GitHub Actions (si aun no lo estaba).
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
 
       - uses: actions/setup-node@v4
         with:
