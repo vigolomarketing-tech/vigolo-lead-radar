@@ -1,42 +1,47 @@
-import { LeadsProvider } from './context/LeadsContext'
-import { Sidebar } from './components/layout/Sidebar'
-import { Topbar } from './components/layout/Topbar'
-import { StatsBar } from './components/dashboard/StatsBar'
-import { SearchPanel } from './components/search/SearchPanel'
-import { LeadFilters } from './components/leads/LeadFilters'
-import { LeadList } from './components/leads/LeadList'
-import { LeadDetail } from './components/leads/LeadDetail'
+import { lazy, Suspense } from 'react'
+import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { DashboardPage } from './features/dashboard/DashboardPage'
+import { ProspectingPage } from './features/prospecting/ProspectingPage'
+import { CrmBoardPage } from './features/crm/CrmBoardPage'
+import { AdvisorPage } from './features/advisor/AdvisorPage'
+import { IntegrationsPage } from './features/integrations/IntegrationsPage'
+import { LeadDrawer } from './features/leads/LeadDrawer'
+import { Spinner } from './components/ui/primitives'
+
+// El mapa (leaflet) se carga bajo demanda para aligerar el bundle inicial.
+const MapPage = lazy(() =>
+  import('./features/map/MapPage').then((m) => ({ default: m.MapPage })),
+)
+
+function PageFallback() {
+  return (
+    <div className="grid min-h-screen place-items-center bg-base-950">
+      <Spinner className="h-8 w-8" />
+    </div>
+  )
+}
 
 export default function App() {
   return (
-    <LeadsProvider>
-      <div className="flex min-h-screen bg-base-950 text-slate-200">
-        <Sidebar />
-
-        <div className="flex min-w-0 flex-1 flex-col">
-          <Topbar />
-
-          <main className="mx-auto w-full max-w-6xl flex-1 space-y-5 p-4 sm:p-6">
-            <StatsBar />
-            <SearchPanel />
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold text-slate-100">
-                  Leads detectados
-                </h2>
-              </div>
-              <LeadFilters />
-              <LeadList />
-            </div>
-          </main>
-
-          <footer className="border-t border-white/10 px-6 py-4 text-center text-xs text-slate-600">
-            Vigolo Lead Radar &middot; Herramienta interna de Vigolo Web Studio
-          </footer>
-        </div>
-
-        <LeadDetail />
-      </div>
-    </LeadsProvider>
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/prospeccion" element={<ProspectingPage />} />
+        <Route
+          path="/mapa"
+          element={
+            <Suspense fallback={<PageFallback />}>
+              <MapPage />
+            </Suspense>
+          }
+        />
+        <Route path="/crm" element={<CrmBoardPage />} />
+        <Route path="/asesor" element={<AdvisorPage />} />
+        <Route path="/integraciones" element={<IntegrationsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+      {/* Drawer global disponible en todas las vistas */}
+      <LeadDrawer />
+    </HashRouter>
   )
 }

@@ -1,94 +1,221 @@
 // =====================================================================
-// Tipos centrales de Vigolo Lead Radar
+// Vigolo Lead Radar — Modelo de dominio (v2 SaaS)
 // =====================================================================
 
-/** Estado de la presencia digital detectada para un negocio. */
+export type OpportunityLevel = 'alta' | 'media' | 'baja'
+
 export type DigitalPresence =
   | 'sin-web'
   | 'web-vieja'
   | 'web-aceptable'
   | 'buen-potencial'
 
-/** Nivel de oportunidad derivado del puntaje. */
-export type OpportunityLevel = 'alta' | 'media' | 'baja'
-
-/** Estados del CRM comercial. */
-export type CrmStatus =
+/** Pipeline comercial estilo HubSpot. */
+export type CrmStage =
   | 'nuevo'
   | 'contactado'
   | 'respondio'
   | 'interesado'
   | 'reunion'
-  | 'cerrado'
-  | 'descartado'
+  | 'propuesta'
+  | 'ganado'
+  | 'perdido'
 
-/** Canales soportados por el generador de mensajes. */
-export type MessageChannel = 'whatsapp' | 'instagram' | 'email' | 'seguimiento'
+export type MessageChannel =
+  | 'whatsapp'
+  | 'instagram'
+  | 'email'
+  | 'linkedin'
+  | 'seguimiento-1'
+  | 'seguimiento-2'
+  | 'seguimiento-3'
+  | 'obj-precio'
+  | 'obj-pensarlo'
+  | 'obj-ya-tengo-web'
+  | 'obj-no-responde'
+  | 'quiere-reunion'
 
-/**
- * Lead = negocio potencial detectado en un sondeo.
- * Combina datos "de fuente" (Google Places / mock) con datos "de CRM"
- * que el usuario edita manualmente.
- */
-export interface Lead {
-  id: string
+/** Ubicación normalizada de un negocio. */
+export interface GeoLocation {
+  lat: number
+  lng: number
+}
 
-  // --- Datos del negocio ---
-  name: string
-  category: string // rubro
-  zone: string // zona / barrio
-  address: string
+/** Horario simplificado. */
+export interface OpeningHours {
+  openNow?: boolean
+  weekdayText?: string[]
+}
+
+/** Señales crudas de un negocio (vienen del provider: mock o Google Places). */
+export interface BusinessSignals {
+  website?: string
+  websiteQuality?: 'vieja' | 'aceptable' | 'moderna'
+  instagram?: string
+  facebook?: string
+  linkedin?: string
+  hasActiveInstagram?: boolean
+  reviewsCount?: number
+  rating?: number
   phone?: string
   whatsapp?: string
-  website?: string
-  instagram?: string
+  verified?: boolean
+  photos?: string[]
+}
 
-  // --- Senales usadas para el scoring ---
-  reviewsCount?: number // cantidad de resenas en Google Business
-  rating?: number // puntuacion promedio (0-5)
-  hasActiveInstagram?: boolean
+/** Un factor individual del score, con su aporte y explicación. */
+export interface ScoreFactor {
+  key: string
+  label: string
+  points: number // aporte (puede ser negativo)
+  detail: string
+}
 
-  // --- Analisis de oportunidad (calculado) ---
+export interface ScoreResult {
+  score: number // 1..100
+  level: OpportunityLevel
   digitalPresence: DigitalPresence
-  score: number // 1-100
-  scoreReason: string
+  factors: ScoreFactor[]
+  headline: string // resumen de una línea
+}
 
-  // --- CRM ---
-  crmStatus: CrmStatus
+/** Hallazgo de la auditoría / diagnóstico. */
+export interface AuditFinding {
+  id: string
+  area: 'web' | 'seo' | 'performance' | 'social' | 'confianza' | 'conversion'
+  title: string
+  status: 'ok' | 'warn' | 'fail'
+  priority: 'alta' | 'media' | 'baja'
+  impact: string // cómo impacta / por qué pierde clientes
+  solution: string // cómo lo resuelve una web nueva
+}
+
+/** Comparativa contra un estándar "Vigolo". */
+export interface CompetitorDimension {
+  dimension: string
+  theirs: number // 0..100
+  vigolo: number // 0..100
+}
+
+/** Informe completo generado por la IA analista. */
+export interface AnalysisReport {
+  generatedAt: string
+  summary: string
+  findings: AuditFinding[]
+  competitor?: CompetitorDimension[]
+  metrics: {
+    performance: number
+    seo: number
+    ux: number
+    branding: number
+    conversion: number
+    mobile: number
+    trust: number
+  }
+}
+
+/** Nota / evento del historial del lead. */
+export interface CrmEvent {
+  id: string
+  at: string // ISO
+  type: 'nota' | 'contacto' | 'estado' | 'sistema'
+  text: string
+}
+
+/** Recordatorio / seguimiento. */
+export interface Reminder {
+  id: string
+  date: string // ISO date
+  text: string
+  done: boolean
+}
+
+/** Lead = negocio potencial con análisis + CRM. */
+export interface Lead {
+  id: string
+  // Identidad del negocio
+  name: string
+  category: string
+  zone: string
+  address: string
+  location?: GeoLocation
+  mapsUrl?: string
+  openingHours?: OpeningHours
+  categories?: string[]
+
+  // Señales + score (calculado)
+  signals: BusinessSignals
+  score: number
+  scoreLevel: OpportunityLevel
+  digitalPresence: DigitalPresence
+  scoreHeadline: string
+  scoreFactors: ScoreFactor[]
+
+  // Análisis IA (opcional hasta que se ejecute "Analizar")
+  analysis?: AnalysisReport
+
+  // CRM
+  stage: CrmStage
   notes: string
-  lastContactDate?: string // ISO date
-  nextFollowUpDate?: string // ISO date
+  events: CrmEvent[]
+  reminders: Reminder[]
+  lastContactDate?: string
+  nextFollowUpDate?: string
+  potentialValue: number // ARS/USD estimado
+  closeProbability: number // 0..100
+  proposalSent: boolean
 
-  // --- Metadata ---
-  createdAt: string // ISO date
+  // Metadata
+  createdAt: string
   source: 'mock' | 'google'
 }
 
-/** Parametros de un sondeo por zona + rubro. */
+// --- Búsqueda / filtros ---
+export type LocationKind =
+  | 'ciudad'
+  | 'barrio'
+  | 'provincia'
+  | 'pais'
+  | 'codigo-postal'
+
 export interface SearchParams {
-  zone: string
+  query: string // texto libre de ubicación
+  locationKind: LocationKind
   category: string
+  radiusKm: number
+  minRating: number
+  minReviews: number
+  openNow: boolean
+  hasWebsite: 'any' | 'yes' | 'no'
+  hasPhone: boolean
+  hasInstagram: boolean
+  verifiedOnly: boolean
 }
 
-/** Filtros aplicados sobre la lista de leads. */
 export interface LeadFiltersState {
-  query: string // buscador por nombre
-  category: string // '' = todos
-  zone: string // '' = todos
-  opportunity: OpportunityLevel | '' // '' = todos
-  status: CrmStatus | '' // '' = todos
+  query: string
+  category: string
+  zone: string
+  opportunity: OpportunityLevel | ''
+  stage: CrmStage | ''
 }
 
-/** Estadisticas agregadas para el dashboard. */
 export interface DashboardStats {
   total: number
+  analyzed: number
   highOpportunity: number
   contacted: number
   interested: number
-  closed: number
+  won: number
+  lost: number
+  potentialRevenue: number
+  realRevenue: number
+  responseRate: number
+  closeRate: number
+  bestZone: string
+  bestCategory: string
 }
 
-/** Un mensaje generado listo para copiar y pegar. */
 export interface GeneratedMessage {
   channel: MessageChannel
   label: string

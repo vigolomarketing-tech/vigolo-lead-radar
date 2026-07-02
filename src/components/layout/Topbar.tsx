@@ -1,38 +1,56 @@
+import { NavLink } from 'react-router-dom'
 import { Brand } from './Sidebar'
-import { useLeads } from '../../context/LeadsContext'
-import { downloadLeadsCsv } from '../../lib/csv'
-import { Button } from '../ui/Button'
+import { activeDataProvider } from '../../services/providers/dataProvider'
+import { activeAiProvider } from '../../services/ai/aiProvider'
+import { cn } from '../../utils/cn'
 
-/** Barra superior: marca (solo mobile) + fecha + exportar todo. */
-export function Topbar() {
-  const { leads } = useLeads()
-  const today = new Date().toLocaleDateString('es-AR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-  })
+const MOBILE_NAV = [
+  { to: '/', label: 'Inicio', end: true },
+  { to: '/prospeccion', label: 'Buscar' },
+  { to: '/crm', label: 'CRM' },
+  { to: '/asesor', label: 'IA' },
+]
 
+export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-white/10 bg-base-950/80 px-4 py-3 backdrop-blur sm:px-6">
-      <div className="lg:hidden">
-        <Brand />
+    <header className="sticky top-0 z-20 border-b border-white/10 bg-base-950/70 backdrop-blur-xl">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="lg:hidden">
+          <Brand />
+        </div>
+        <div className="hidden lg:block">
+          <h1 className="text-lg font-bold text-slate-50">{title}</h1>
+          {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
+        </div>
+        <div className="flex items-center gap-2 text-[11px]">
+          <span className="hidden items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-slate-400 ring-1 ring-inset ring-white/10 sm:inline-flex">
+            <span className={cn('h-1.5 w-1.5 rounded-full', activeDataProvider === 'google' ? 'bg-emerald-400' : 'bg-amber-400')} />
+            Datos: {activeDataProvider === 'google' ? 'Google' : 'Demo'}
+          </span>
+          <span className="hidden items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-slate-400 ring-1 ring-inset ring-white/10 sm:inline-flex">
+            <span className={cn('h-1.5 w-1.5 rounded-full', activeAiProvider === 'openai' ? 'bg-emerald-400' : 'bg-amber-400')} />
+            IA: {activeAiProvider === 'openai' ? 'OpenAI' : 'Local'}
+          </span>
+        </div>
       </div>
-      <div className="hidden lg:block">
-        <h1 className="text-lg font-bold text-slate-50">Dashboard</h1>
-        <p className="text-xs capitalize text-slate-500">{today}</p>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => downloadLeadsCsv(leads)}
-          disabled={leads.length === 0}
-          title="Exportar todos los leads a CSV"
-        >
-          ↓ Exportar todo
-        </Button>
-      </div>
+      {/* Nav mobile */}
+      <nav className="flex gap-1 overflow-x-auto px-4 pb-2 lg:hidden">
+        {MOBILE_NAV.map((n) => (
+          <NavLink
+            key={n.to}
+            to={n.to}
+            end={n.end}
+            className={({ isActive }) =>
+              cn(
+                'whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold',
+                isActive ? 'bg-electric-500 text-white' : 'bg-white/5 text-slate-300',
+              )
+            }
+          >
+            {n.label}
+          </NavLink>
+        ))}
+      </nav>
     </header>
   )
 }
