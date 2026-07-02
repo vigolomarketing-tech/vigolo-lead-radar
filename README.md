@@ -99,16 +99,14 @@ en una subruta (GitHub Pages) sin cambios.
 
 ### Opción B — GitHub Pages (automático)
 
-Ya viene un workflow en `.github/workflows/deploy.yml` que **habilita Pages
-solo** (usa `actions/configure-pages` con `enablement: true`), así que no hace
-falta tocar la UI:
+Ya viene un workflow en `.github/workflows/deploy.yml`:
 
-1. Cada push a `main` buildea y publica automáticamente.
-2. La app queda en `https://<usuario>.github.io/<repo>/`.
-
-> Si la organización bloquea la habilitación automática de Pages desde
-> Actions, activalo una vez a mano en **Settings → Pages → Source =
-> "GitHub Actions"** y volvé a correr el workflow.
+1. **Paso manual único:** en el repo, **Settings → Pages → Source =
+   "GitHub Actions"**. (La organización no permite que el workflow habilite
+   Pages por API, así que esta primera activación va a mano.)
+2. Desde ahí, cada push a `main` buildea y publica automáticamente.
+3. La app queda en `https://<usuario>.github.io/<repo>/` — para este repo:
+   `https://vigolomarketing-tech.github.io/vigolo-lead-radar/`.
 
 ---
 
