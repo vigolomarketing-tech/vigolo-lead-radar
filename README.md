@@ -84,9 +84,12 @@ cp .env.example .env
 
 ## ☁️ Deploy
 
-La app es **100% estática** (build a `dist/`) y usa `base: './'` en
-`vite.config.ts`, así que anda tanto en la raíz de un dominio (Vercel) como
-en una subruta (GitHub Pages) sin cambios.
+La app es **100% estática** (build a `dist/`). El `base` de Vite es
+configurable con la variable `VITE_BASE` (default `/`):
+
+- **Vercel / dominio raíz:** `VITE_BASE=/` (default, no hay que tocar nada).
+- **GitHub Pages (subruta):** `VITE_BASE=/vigolo-lead-radar/`. El workflow
+  ya lo setea solo en el build.
 
 ### Opción A — Vercel (recomendada)
 
@@ -102,8 +105,8 @@ en una subruta (GitHub Pages) sin cambios.
 Ya viene un workflow en `.github/workflows/deploy.yml`:
 
 1. **Paso manual único:** en el repo, **Settings → Pages → Source =
-   "GitHub Actions"**. (La organización no permite que el workflow habilite
-   Pages por API, así que esta primera activación va a mano.)
+   "GitHub Actions"** (NO "Deploy from a branch"). Si queda en modo branch,
+   Pages sirve el código fuente sin compilar y se ve la pantalla en blanco.
 2. Desde ahí, cada push a `main` buildea y publica automáticamente.
 3. La app queda en `https://<usuario>.github.io/<repo>/` — para este repo:
    `https://vigolomarketing-tech.github.io/vigolo-lead-radar/`.
