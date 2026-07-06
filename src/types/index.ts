@@ -35,6 +35,17 @@ export type MessageChannel =
   | 'obj-no-responde'
   | 'quiere-reunion'
 
+/** Prioridad comercial manual. */
+export type Priority = 'alta' | 'media' | 'baja'
+
+/** Tarea del CRM. */
+export interface Task {
+  id: string
+  text: string
+  done: boolean
+  dueDate?: string
+}
+
 /** Ubicación normalizada de un negocio. */
 export interface GeoLocation {
   lat: number
@@ -136,7 +147,9 @@ export interface Lead {
   // Identidad del negocio
   name: string
   category: string
-  zone: string
+  province: string
+  city: string
+  zone: string // barrio / localidad (compat.)
   address: string
   location?: GeoLocation
   mapsUrl?: string
@@ -156,6 +169,9 @@ export interface Lead {
 
   // CRM
   stage: CrmStage
+  priority: Priority
+  tags: string[]
+  tasks: Task[]
   notes: string
   events: CrmEvent[]
   reminders: Reminder[]
@@ -179,7 +195,10 @@ export type LocationKind =
   | 'codigo-postal'
 
 export interface SearchParams {
-  query: string // texto libre de ubicación
+  nationwide: boolean // "Buscar en toda Argentina"
+  province: string // '' = todas
+  city: string // '' = todas
+  query: string // texto libre de ubicación (barrio, CP, etc.)
   locationKind: LocationKind
   category: string
   radiusKm: number
@@ -195,9 +214,12 @@ export interface SearchParams {
 export interface LeadFiltersState {
   query: string
   category: string
+  province: string
+  city: string
   zone: string
   opportunity: OpportunityLevel | ''
   stage: CrmStage | ''
+  priority: Priority | ''
 }
 
 export interface DashboardStats {
@@ -212,6 +234,8 @@ export interface DashboardStats {
   realRevenue: number
   responseRate: number
   closeRate: number
+  bestProvince: string
+  bestCity: string
   bestZone: string
   bestCategory: string
 }

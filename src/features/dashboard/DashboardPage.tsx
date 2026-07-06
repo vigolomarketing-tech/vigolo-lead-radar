@@ -60,12 +60,18 @@ export function DashboardPage() {
         <RateCard label="Tasa de respuesta" value={stats.responseRate} />
         <RateCard label="Tasa de cierre" value={stats.closeRate} />
         <Card className="p-4">
-          <p className="text-xs text-slate-400">Mejor zona / rubro / mes</p>
-          <p className="mt-1 text-sm font-semibold text-slate-100">📍 {stats.bestZone}</p>
+          <p className="text-xs text-slate-400">Mejores oportunidades</p>
+          <p className="mt-1 text-sm font-semibold text-slate-100">🇦🇷 {stats.bestProvince}</p>
+          <p className="text-sm font-semibold text-slate-100">📍 {stats.bestCity}</p>
           <p className="text-sm font-semibold text-slate-100">🏷️ {stats.bestCategory}</p>
-          <p className="text-sm font-semibold text-slate-100">📅 Julio 2026</p>
         </Card>
       </div>
+
+      {/* Embudo de conversión */}
+      <Card className="p-4">
+        <h3 className="mb-3 text-sm font-semibold text-slate-100">Embudo de conversión</h3>
+        <ConversionFunnel leads={leads} />
+      </Card>
 
       {/* Gráficos */}
       <div className="grid gap-4 lg:grid-cols-3">
@@ -107,7 +113,7 @@ export function DashboardPage() {
         </Card>
 
         <Card className="p-4 lg:col-span-3">
-          <h3 className="mb-3 text-sm font-semibold text-slate-100">Leads por zona</h3>
+          <h3 className="mb-3 text-sm font-semibold text-slate-100">Leads por ciudad</h3>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={zoneData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
               <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
@@ -137,6 +143,45 @@ function Kpi({ label, value, accent, icon }: { label: string; value: string; acc
       <div className="text-xl font-extrabold tracking-tight text-slate-50">{value}</div>
       <div className="text-xs font-medium text-slate-400">{label}</div>
     </Card>
+  )
+}
+
+const FUNNEL_STAGES: { stages: CrmStage[]; label: string }[] = [
+  { stages: ['nuevo', 'contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado', 'perdido'], label: 'Encontrados' },
+  { stages: ['contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado'], label: 'Contactados' },
+  { stages: ['respondio', 'interesado', 'reunion', 'propuesta', 'ganado'], label: 'Respondieron' },
+  { stages: ['interesado', 'reunion', 'propuesta', 'ganado'], label: 'Interesados' },
+  { stages: ['propuesta', 'ganado'], label: 'Con propuesta' },
+  { stages: ['ganado'], label: 'Ganados' },
+]
+
+function ConversionFunnel({ leads }: { leads: import('../../types').Lead[] }) {
+  const total = leads.length || 1
+  return (
+    <div className="space-y-2">
+      {FUNNEL_STAGES.map((step, i) => {
+        const n = leads.filter((l) => step.stages.includes(l.stage)).length
+        const pct = (n / total) * 100
+        return (
+          <div key={step.label} className="flex items-center gap-3">
+            <span className="w-28 shrink-0 text-xs text-slate-400">{step.label}</span>
+            <div className="h-6 flex-1 overflow-hidden rounded-lg bg-white/5">
+              <div
+                className="flex h-full items-center justify-end rounded-lg px-2 text-[11px] font-bold text-white transition-all"
+                style={{
+                  width: `${Math.max(pct, 6)}%`,
+                  background: `linear-gradient(90deg, #1f8fef, #3EA6FF)`,
+                  opacity: 1 - i * 0.1,
+                }}
+              >
+                {n}
+              </div>
+            </div>
+            <span className="w-10 shrink-0 text-right text-xs text-slate-500">{Math.round(pct)}%</span>
+          </div>
+        )
+      })}
+    </div>
   )
 }
 

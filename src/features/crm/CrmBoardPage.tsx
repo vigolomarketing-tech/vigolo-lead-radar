@@ -105,7 +105,7 @@ function BoardCard({
         <ScoreRing score={lead.score} size={38} />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-100">{lead.name}</p>
-          <p className="truncate text-xs text-slate-400">{lead.category} · {lead.zone}</p>
+          <p className="truncate text-xs text-slate-400">{lead.category} · {lead.city}</p>
         </div>
       </div>
       <div className="mt-2 flex items-center justify-between text-xs">

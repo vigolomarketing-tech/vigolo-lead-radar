@@ -5,7 +5,7 @@ import type { DashboardStats, Lead } from '../types'
 
 const CONTACTED_STAGES = ['contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado']
 
-function bestBy(leads: Lead[], key: 'zone' | 'category'): string {
+function bestBy(leads: Lead[], key: 'zone' | 'category' | 'province' | 'city'): string {
   const map = new Map<string, { sum: number; n: number }>()
   for (const l of leads) {
     const k = l[key]
@@ -51,6 +51,8 @@ export function useStats(): DashboardStats {
       realRevenue: won.reduce((s, l) => s + l.potentialValue, 0),
       responseRate: contacted ? (responded / contacted) * 100 : 0,
       closeRate: contacted ? (won.length / contacted) * 100 : 0,
+      bestProvince: bestBy(leads, 'province'),
+      bestCity: bestBy(leads, 'city'),
       bestZone: bestBy(leads, 'zone'),
       bestCategory: bestBy(leads, 'category'),
     }

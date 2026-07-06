@@ -10,6 +10,18 @@ proceso comercial en un CRM profesional.
 
 ---
 
+## 🆕 Novedades 3.0
+
+- **Cobertura nacional**: búsqueda por provincia/ciudad/localidad en las 24
+  jurisdicciones + botón **"Buscar en toda Argentina"** (barrido provincia por
+  provincia con progreso). Dataset demo con cientos de negocios de todo el país.
+- **CRM ampliado**: prioridad, etiquetas y tareas por lead.
+- **Mapa profesional**: clustering + mapa de calor + filtro por provincia.
+- **Dashboard**: embudo de conversión + mejor provincia/ciudad/rubro.
+- **Filtros avanzados** (provincia, rubro, oportunidad, estado, prioridad).
+- **Exportar** también a **Google Sheets** y **Notion**.
+- **Rendimiento**: grilla **virtualizada** para miles de negocios.
+
 ## ✨ Módulos
 
 - **Dashboard ejecutivo** — KPIs, tasas de respuesta/cierre, facturación

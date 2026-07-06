@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Drawer } from '../../components/ui/Drawer'
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, PresenceBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, PresenceBadge, PriorityBadge, StageBadge } from '../../components/ui/badges'
 import { Button } from '../../components/ui/primitives'
 import { AnalysisPanel } from '../analysis/AnalysisPanel'
 import { MessagesPanel } from '../messages/MessagesPanel'
@@ -42,11 +42,12 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             <ScoreRing score={lead.score} size={60} />
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-slate-50">{lead.name}</h2>
-              <p className="text-sm text-slate-400">{lead.category} · {lead.zone}</p>
+              <p className="text-sm text-slate-400">{lead.category} · {lead.city}, {lead.province}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <OpportunityBadge score={lead.score} />
                 <PresenceBadge presence={lead.digitalPresence} />
                 <StageBadge stage={lead.stage} />
+                <PriorityBadge priority={lead.priority} />
               </div>
             </div>
           </div>
@@ -101,6 +102,8 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
 
 function Overview({ lead }: { lead: Lead }) {
   const rows: [string, string | undefined, string?][] = [
+    ['Provincia', lead.province],
+    ['Ciudad', lead.city],
     ['Dirección', lead.address],
     ['Teléfono', lead.signals.phone, lead.signals.phone ? `tel:${lead.signals.phone.replace(/[^\d+]/g, '')}` : undefined],
     ['WhatsApp', lead.signals.whatsapp, lead.signals.whatsapp ? `https://wa.me/${lead.signals.whatsapp.replace(/[^\d]/g, '')}` : undefined],
