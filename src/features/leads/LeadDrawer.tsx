@@ -1,12 +1,13 @@
 import { useState } from 'react'
 import { Drawer } from '../../components/ui/Drawer'
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, PresenceBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, PresenceBadge, PriorityBadge, StageBadge } from '../../components/ui/badges'
 import { Button } from '../../components/ui/primitives'
 import { AnalysisPanel } from '../analysis/AnalysisPanel'
 import { MessagesPanel } from '../messages/MessagesPanel'
 import { CrmPanel } from './CrmPanel'
 import { useLeadStore } from '../../store/useLeadStore'
+import { generateDemoHtml, openDemo } from '../../services/demo/generateDemo'
 import { cn } from '../../utils/cn'
 import type { Lead } from '../../types'
 
@@ -32,6 +33,13 @@ export function LeadDrawer() {
 function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>('resumen')
   const removeLead = useLeadStore((s) => s.removeLead)
+  const addDemo = useLeadStore((s) => s.addDemo)
+
+  const createDemo = () => {
+    const html = generateDemoHtml(lead)
+    addDemo({ leadId: lead.id, leadName: lead.name, html })
+    openDemo(html)
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -42,11 +50,12 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
             <ScoreRing score={lead.score} size={60} />
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-slate-50">{lead.name}</h2>
-              <p className="text-sm text-slate-400">{lead.category} · {lead.zone}</p>
+              <p className="text-sm text-slate-400">{lead.category} · {lead.city}, {lead.province}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <OpportunityBadge score={lead.score} />
                 <PresenceBadge presence={lead.digitalPresence} />
                 <StageBadge stage={lead.stage} />
+                <PriorityBadge priority={lead.priority} />
               </div>
             </div>
           </div>
@@ -91,9 +100,14 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         >
           Eliminar
         </Button>
-        <Button variant="secondary" size="sm" onClick={onClose}>
-          Cerrar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="success" size="sm" onClick={createDemo} title="Generar una landing de muestra para el cliente">
+            ✨ Crear demo
+          </Button>
+          <Button variant="secondary" size="sm" onClick={onClose}>
+            Cerrar
+          </Button>
+        </div>
       </div>
     </div>
   )
@@ -101,6 +115,8 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
 
 function Overview({ lead }: { lead: Lead }) {
   const rows: [string, string | undefined, string?][] = [
+    ['Provincia', lead.province],
+    ['Ciudad', lead.city],
     ['Dirección', lead.address],
     ['Teléfono', lead.signals.phone, lead.signals.phone ? `tel:${lead.signals.phone.replace(/[^\d+]/g, '')}` : undefined],
     ['WhatsApp', lead.signals.whatsapp, lead.signals.whatsapp ? `https://wa.me/${lead.signals.whatsapp.replace(/[^\d]/g, '')}` : undefined],

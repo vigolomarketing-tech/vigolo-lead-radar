@@ -24,8 +24,15 @@ function delay(ms: number) {
 function applyFilters(leads: Lead[], p: SearchParams): Lead[] {
   const zone = normalize(p.query)
   const cat = normalize(p.category)
+  const prov = normalize(p.province)
+  const city = normalize(p.city)
   return leads.filter((l) => {
-    if (zone && !normalize(`${l.zone} ${l.address}`).includes(zone)) return false
+    // Modo nacional ignora provincia/ciudad/texto de ubicación.
+    if (!p.nationwide) {
+      if (prov && normalize(l.province) !== prov) return false
+      if (city && normalize(l.city) !== city) return false
+      if (zone && !normalize(`${l.zone} ${l.city} ${l.address}`).includes(zone)) return false
+    }
     if (cat && !normalize(`${l.category} ${l.categories?.join(' ') ?? ''}`).includes(cat)) return false
     if (p.minRating && (l.signals.rating ?? 0) < p.minRating) return false
     if (p.minReviews && (l.signals.reviewsCount ?? 0) < p.minReviews) return false
@@ -40,7 +47,9 @@ function applyFilters(leads: Lead[], p: SearchParams): Lead[] {
 }
 
 async function searchMock(p: SearchParams): Promise<Lead[]> {
-  await delay(650)
+  // Latencia baja: búsqueda simple ágil y barrido nacional (~24 llamadas)
+  // que igual muestra progreso sin demorar de más.
+  await delay(220)
   return applyFilters(MOCK_LEADS, p)
 }
 

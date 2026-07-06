@@ -13,6 +13,7 @@ interface ImportMetaEnv {
   // Flags de integraciones (placeholder)
   readonly VITE_SHEETS_CONNECTED?: string
   readonly VITE_HUBSPOT_CONNECTED?: string
+  readonly VITE_SUPABASE_URL?: string
   // Deploy
   readonly VITE_BASE?: string
 }

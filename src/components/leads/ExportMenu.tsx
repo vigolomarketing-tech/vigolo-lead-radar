@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '../ui/primitives'
-import { exportCsv, exportExcel, exportJson, exportPdf } from '../../utils/exporters'
+import { exportCsv, exportExcel, exportJson, exportNotion, exportPdf, exportSheets } from '../../utils/exporters'
 import type { Lead } from '../../types'
 
 export function ExportMenu({ leads }: { leads: Lead[] }) {
@@ -23,6 +23,8 @@ export function ExportMenu({ leads }: { leads: Lead[] }) {
               ['Excel', () => exportExcel(leads)],
               ['JSON', () => exportJson(leads)],
               ['PDF', () => void exportPdf(leads)],
+              ['Google Sheets', () => void exportSheets(leads)],
+              ['Notion (Markdown)', () => exportNotion(leads)],
             ].map(([label, fn]) => (
               <button
                 key={label as string}

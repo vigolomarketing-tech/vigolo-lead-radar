@@ -10,27 +10,39 @@ import { searchBusinesses } from '../services/providers/dataProvider'
 import { aiAnalyze } from '../services/ai/aiProvider'
 import { uid } from '../lib/id'
 import { levelFromScore } from '../lib/scoring'
+import { ARGENTINA } from '../config/argentina'
 import type {
+  Campaign,
   CrmEvent,
   CrmStage,
+  Demo,
+  Goals,
   Lead,
   LeadFiltersState,
+  Priority,
   Reminder,
   SearchParams,
+  Task,
 } from '../types'
 
 const EMPTY_FILTERS: LeadFiltersState = {
   query: '',
   category: '',
+  province: '',
+  city: '',
   zone: '',
   opportunity: '',
   stage: '',
+  priority: '',
 }
 
 /** Campos de CRM que no se pisan al re-importar un negocio existente. */
 function keepCrm(l: Lead): Partial<Lead> {
   return {
     stage: l.stage,
+    priority: l.priority,
+    tags: l.tags,
+    tasks: l.tasks,
     notes: l.notes,
     events: l.events,
     reminders: l.reminders,
@@ -51,16 +63,32 @@ interface LeadState {
   searchError: string | null
   lastSearch: SearchParams | null
   analyzingIds: string[]
+  sweepProgress: { province: string; done: number; total: number } | null
+  campaigns: Campaign[]
+  goals: Goals
+  demos: Demo[]
+
+  addCampaign: (c: Omit<Campaign, 'id' | 'createdAt'>) => void
+  removeCampaign: (id: string) => void
+  setGoals: (goals: Goals) => void
+  addDemo: (demo: Omit<Demo, 'id' | 'createdAt'>) => void
+  removeDemo: (id: string) => void
 
   setFilters: (patch: Partial<LeadFiltersState>) => void
   resetFilters: () => void
   select: (id: string | null) => void
 
   runSearch: (params: SearchParams) => Promise<number>
+  runNationwideSweep: (params: SearchParams) => Promise<number>
   analyze: (id: string) => Promise<void>
 
   updateLead: (id: string, patch: Partial<Lead>) => void
   setStage: (id: string, stage: CrmStage) => void
+  setPriority: (id: string, priority: Priority) => void
+  toggleTag: (id: string, tag: string) => void
+  addTask: (id: string, text: string, dueDate?: string) => void
+  toggleTask: (id: string, taskId: string) => void
+  removeTask: (id: string, taskId: string) => void
   addNote: (id: string, text: string) => void
   addReminder: (id: string, date: string, text: string) => void
   toggleReminder: (id: string, reminderId: string) => void
@@ -78,6 +106,29 @@ export const useLeadStore = create<LeadState>()(
       searchError: null,
       lastSearch: null,
       analyzingIds: [],
+      sweepProgress: null,
+      campaigns: [],
+      goals: { clientsTarget: 10, revenueTarget: 5000000 },
+      demos: [],
+
+      addCampaign: (c) =>
+        set((s) => ({
+          campaigns: [
+            { ...c, id: uid('camp'), createdAt: new Date().toISOString() },
+            ...s.campaigns,
+          ],
+        })),
+      removeCampaign: (id) =>
+        set((s) => ({ campaigns: s.campaigns.filter((c) => c.id !== id) })),
+      setGoals: (goals) => set({ goals }),
+      addDemo: (demo) =>
+        set((s) => ({
+          demos: [
+            { ...demo, id: uid('demo'), createdAt: new Date().toISOString() },
+            ...s.demos.filter((d) => d.leadId !== demo.leadId),
+          ],
+        })),
+      removeDemo: (id) => set((s) => ({ demos: s.demos.filter((d) => d.id !== id) })),
 
       setFilters: (patch) =>
         set((s) => ({ filters: { ...s.filters, ...patch } })),
@@ -102,6 +153,41 @@ export const useLeadStore = create<LeadState>()(
           return 0
         } finally {
           set({ isSearching: false })
+        }
+      },
+
+      /** Barrido "toda Argentina": recorre provincia por provincia. */
+      runNationwideSweep: async (params) => {
+        set({ isSearching: true, searchError: null })
+        const provinces = ARGENTINA.map((p) => p.name)
+        const acc = new Map<string, Lead>()
+        try {
+          for (let i = 0; i < provinces.length; i++) {
+            const province = provinces[i]
+            set({ sweepProgress: { province, done: i, total: provinces.length } })
+            const results = await searchBusinesses({
+              ...params,
+              nationwide: false,
+              province,
+              city: '',
+              query: '',
+            })
+            for (const r of results) acc.set(r.id, r)
+          }
+          set((s) => {
+            const map = new Map(s.leads.map((l) => [l.id, l]))
+            for (const r of acc.values()) {
+              const existing = map.get(r.id)
+              map.set(r.id, existing ? { ...r, ...keepCrm(existing) } : r)
+            }
+            return { leads: Array.from(map.values()), lastSearch: { ...params, nationwide: true } }
+          })
+          return acc.size
+        } catch (e) {
+          set({ searchError: e instanceof Error ? e.message : 'Error en el barrido nacional.' })
+          return acc.size
+        } finally {
+          set({ isSearching: false, sweepProgress: null })
         }
       },
 
@@ -153,6 +239,48 @@ export const useLeadStore = create<LeadState>()(
               patch.lastContactDate = new Date().toISOString().slice(0, 10)
             return { ...l, ...patch }
           }),
+        })),
+
+      setPriority: (id, priority) =>
+        set((s) => ({ leads: s.leads.map((l) => (l.id === id ? { ...l, priority } : l)) })),
+
+      toggleTag: (id, tag) =>
+        set((s) => ({
+          leads: s.leads.map((l) =>
+            l.id === id
+              ? {
+                  ...l,
+                  tags: l.tags.includes(tag)
+                    ? l.tags.filter((t) => t !== tag)
+                    : [...l.tags, tag],
+                }
+              : l,
+          ),
+        })),
+
+      addTask: (id, text, dueDate) =>
+        set((s) => ({
+          leads: s.leads.map((l) =>
+            l.id === id
+              ? { ...l, tasks: [...l.tasks, { id: uid('task'), text, done: false, dueDate } as Task] }
+              : l,
+          ),
+        })),
+
+      toggleTask: (id, taskId) =>
+        set((s) => ({
+          leads: s.leads.map((l) =>
+            l.id === id
+              ? { ...l, tasks: l.tasks.map((t) => (t.id === taskId ? { ...t, done: !t.done } : t)) }
+              : l,
+          ),
+        })),
+
+      removeTask: (id, taskId) =>
+        set((s) => ({
+          leads: s.leads.map((l) =>
+            l.id === id ? { ...l, tasks: l.tasks.filter((t) => t.id !== taskId) } : l,
+          ),
         })),
 
       addNote: (id, text) =>
@@ -209,8 +337,13 @@ export const useLeadStore = create<LeadState>()(
       resetDemo: () => set({ leads: MOCK_LEADS, filters: EMPTY_FILTERS, selectedId: null }),
     }),
     {
-      name: 'vigolo-lead-radar:v2',
-      partialize: (s) => ({ leads: s.leads }),
+      name: 'vigolo-lead-radar:v4',
+      partialize: (s) => ({
+        leads: s.leads,
+        campaigns: s.campaigns,
+        goals: s.goals,
+        demos: s.demos,
+      }),
     },
   ),
 )

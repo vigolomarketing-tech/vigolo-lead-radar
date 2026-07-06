@@ -73,6 +73,45 @@ export function exportExcel(leads: Lead[], filename = 'vigolo-leads.xls'): void 
   )
 }
 
+/**
+ * Google Sheets: copia los datos como TSV al portapapeles y abre una hoja
+ * nueva (sheets.new) para pegar con Ctrl+V. Sin backend ni OAuth.
+ */
+export async function exportSheets(leads: Lead[]): Promise<void> {
+  const tsv = [
+    HEADERS.join('\t'),
+    ...leads.map((l) => row(l).map((c) => String(c).replace(/\t/g, ' ')).join('\t')),
+  ].join('\n')
+  try {
+    await navigator.clipboard.writeText(tsv)
+    window.open('https://sheets.new', '_blank', 'noopener')
+  } catch {
+    // Fallback: descargar CSV si el portapapeles no está disponible.
+    exportCsv(leads, 'vigolo-leads-sheets.csv')
+  }
+}
+
+/** Notion: descarga una tabla en Markdown lista para pegar en Notion. */
+export function exportNotion(leads: Lead[], filename = 'vigolo-leads.md'): void {
+  const cols = ['Nombre', 'Rubro', 'Provincia', 'Ciudad', 'Presencia', 'Score', 'Estado', 'Prioridad', 'Valor']
+  const line = (cells: (string | number)[]) => `| ${cells.join(' | ')} |`
+  const body = leads.map((l) =>
+    line([
+      l.name, l.category, l.province, l.city,
+      DIGITAL_PRESENCE_LABEL[l.digitalPresence], l.score,
+      CRM_STAGE_LABEL[l.stage], l.priority, l.potentialValue,
+    ]),
+  )
+  const md = [
+    '# Vigolo Lead Radar — Leads',
+    '',
+    line(cols),
+    line(cols.map(() => '---')),
+    ...body,
+  ].join('\n')
+  triggerDownload(new Blob([md], { type: 'text/markdown;charset=utf-8;' }), filename)
+}
+
 /** PDF con la lista de leads (resumen) usando jsPDF + autotable. */
 export async function exportPdf(leads: Lead[], filename = 'vigolo-leads.pdf'): Promise<void> {
   const { default: JsPDF } = await import('jspdf')

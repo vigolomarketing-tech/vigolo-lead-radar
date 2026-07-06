@@ -8,7 +8,17 @@ import {
   OPPORTUNITY_LABEL,
   OPPORTUNITY_STYLE,
 } from '../../lib/labels'
-import type { CrmStage, DigitalPresence } from '../../types'
+import type { CrmStage, DigitalPresence, Priority } from '../../types'
+
+const PRIORITY_STYLE: Record<Priority, string> = {
+  alta: 'bg-rose-500/15 text-rose-300 ring-rose-400/30',
+  media: 'bg-amber-500/15 text-amber-300 ring-amber-400/30',
+  baja: 'bg-slate-500/15 text-slate-300 ring-slate-400/30',
+}
+
+export function PriorityBadge({ priority }: { priority: Priority }) {
+  return <Badge className={PRIORITY_STYLE[priority]} title="Prioridad">🚩 {priority}</Badge>
+}
 
 export function OpportunityBadge({ score }: { score: number }) {
   const lvl = levelFromScore(score)

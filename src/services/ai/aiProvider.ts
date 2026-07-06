@@ -33,12 +33,31 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   return res.json() as Promise<T>
 }
 
+/** Valida que el informe del backend tenga la forma mínima esperada. */
+function isValidReport(r: unknown): r is AnalysisReport {
+  const rep = r as AnalysisReport
+  return Boolean(
+    rep &&
+      typeof rep.summary === 'string' &&
+      Array.isArray(rep.findings) &&
+      rep.metrics &&
+      typeof rep.metrics.performance === 'number',
+  )
+}
+
 /** Analiza un negocio y devuelve el informe (web, GBP, redes). */
 export async function aiAnalyze(lead: Lead): Promise<AnalysisReport> {
   await new Promise((r) => setTimeout(r, 500)) // UX "pensando..."
   if (useOpenAI) {
     try {
-      return await post<AnalysisReport>('/ai/analyze', { lead })
+      const report = await post<AnalysisReport>('/ai/analyze', { lead })
+      // Si el backend devuelve algo incompleto, completamos con el análisis
+      // local para que la UI nunca se rompa.
+      if (isValidReport(report)) {
+        const local = analyzeLead(lead)
+        return { ...local, ...report, competitor: report.competitor ?? local.competitor }
+      }
+      return analyzeLead(lead)
     } catch {
       return analyzeLead(lead) // fallback resiliente
     }

@@ -1,160 +1,142 @@
 // =====================================================================
-// Datos demo realistas (GBA sur + CABA) con coordenadas para el mapa.
-// Cuando se conecte Google Places, se reemplazan por resultados reales.
+// Dataset demo NACIONAL (toda Argentina).
+// Combina leads "curados" del GBA (con estado de CRM para la demo) con
+// negocios generados determinísticamente por provincia/ciudad/rubro.
+// Cuando se conecte Google Places, se reemplaza por resultados reales.
 // =====================================================================
 
+import { ARGENTINA, CATEGORIES } from '../../config/argentina'
 import { buildLead, type RawBusiness } from '../leadFactory'
 import type { Lead } from '../../types'
 
-const RAW: RawBusiness[] = [
+// --- Leads curados (con historial de CRM para que la demo arranque viva) ---
+const CURATED: RawBusiness[] = [
   {
-    name: 'Barbería El Corte Fino', category: 'Barbería', zone: 'Longchamps',
-    address: 'Av. Hipólito Yrigoyen 12450, Longchamps',
-    location: { lat: -34.858, lng: -58.392 }, openNow: true,
+    name: 'Barbería El Corte Fino', category: 'Barbería', province: 'Buenos Aires', city: 'Longchamps', zone: 'Longchamps',
+    address: 'Av. Hipólito Yrigoyen 12450, Longchamps', location: { lat: -34.858, lng: -58.392 }, openNow: true,
     signals: { whatsapp: '+54 9 11 3456-7890', instagram: '@elcortefino.barber', hasActiveInstagram: true, reviewsCount: 68, rating: 4.8, verified: true },
   },
   {
-    name: 'Gimnasio Titán Fit', category: 'Gimnasio', zone: 'Adrogué',
-    address: 'Diagonal Brown 1520, Adrogué',
-    location: { lat: -34.802, lng: -58.389 }, openNow: true,
+    name: 'Gimnasio Titán Fit', category: 'Gimnasio', province: 'Buenos Aires', city: 'Adrogué', zone: 'Adrogué',
+    address: 'Diagonal Brown 1520, Adrogué', location: { lat: -34.802, lng: -58.389 }, openNow: true,
     signals: { phone: '011 4293-5510', whatsapp: '+54 9 11 6677-1122', instagram: '@titanfit.adrogue', hasActiveInstagram: true, reviewsCount: 145, rating: 4.6, verified: true },
   },
   {
-    name: 'Parrilla Don Ramón', category: 'Restaurante', zone: 'Burzaco',
-    address: 'Av. Espora 980, Burzaco',
-    location: { lat: -34.826, lng: -58.393 }, openNow: false,
-    signals: { phone: '011 4238-7744', website: 'http://parrilladonramon.com.ar', websiteQuality: 'vieja', instagram: '@donramon.parrilla', hasActiveInstagram: true, facebook: 'donramonparrilla', reviewsCount: 210, rating: 4.5, verified: true },
-  },
-  {
-    name: 'Estética Bella Piel', category: 'Estética', zone: 'Lomas de Zamora',
-    address: 'Laprida 320, Lomas de Zamora',
-    location: { lat: -34.760, lng: -58.401 }, openNow: true,
-    signals: { whatsapp: '+54 9 11 5566-4433', instagram: '@bellapiel.estetica', hasActiveInstagram: true, reviewsCount: 34, rating: 4.9 },
-  },
-  {
-    name: 'Ferretería El Tornillo', category: 'Ferretería', zone: 'Longchamps',
-    address: 'Av. Mariano Castex 455, Longchamps',
-    location: { lat: -34.861, lng: -58.385 }, openNow: true,
-    signals: { phone: '011 4295-3321', reviewsCount: 22, rating: 4.3 },
-  },
-  {
-    name: 'Café de Barrio', category: 'Cafetería', zone: 'Adrogué',
-    address: 'Esteban Adrogué 1140, Adrogué',
-    location: { lat: -34.799, lng: -58.392 }, openNow: true,
-    signals: { whatsapp: '+54 9 11 2233-8899', instagram: '@cafedebarrio.adrogue', hasActiveInstagram: true, reviewsCount: 89, rating: 4.7, verified: true },
-  },
-  {
-    name: 'Inmobiliaria Sur Propiedades', category: 'Inmobiliaria', zone: 'Lomas de Zamora',
-    address: 'Av. Meeks 540, Lomas de Zamora',
-    location: { lat: -34.762, lng: -58.406 }, openNow: false,
-    signals: { phone: '011 4244-1200', website: 'https://surpropiedades.com.ar', websiteQuality: 'aceptable', instagram: '@surpropiedades', hasActiveInstagram: true, reviewsCount: 41, rating: 4.1, verified: true },
-  },
-  {
-    name: 'Electricista Matriculado Gómez', category: 'Electricista', zone: 'Burzaco',
-    address: 'Alsina 233, Burzaco',
-    location: { lat: -34.822, lng: -58.396 }, openNow: true,
+    name: 'Electricista Matriculado Gómez', category: 'Electricista', province: 'Buenos Aires', city: 'Burzaco', zone: 'Burzaco',
+    address: 'Alsina 233, Burzaco', location: { lat: -34.822, lng: -58.396 }, openNow: true,
     signals: { whatsapp: '+54 9 11 3344-5566', reviewsCount: 17, rating: 4.9 },
-    stage: 'contactado', notes: 'Contestó por WhatsApp, pidió ejemplos de webs.', lastContactDate: '2026-06-25', nextFollowUpDate: '2026-07-04',
+    stage: 'contactado', notes: 'Contestó por WhatsApp, pidió ejemplos de webs.', lastContactDate: '2026-06-25', nextFollowUpDate: '2026-07-04', tags: ['caliente'],
   },
   {
-    name: 'Peluquería Studio Glam', category: 'Peluquería', zone: 'CABA',
-    address: 'Av. Rivadavia 5320, Caballito, CABA',
-    location: { lat: -34.619, lng: -58.441 }, openNow: true,
-    signals: { whatsapp: '+54 9 11 7788-9900', instagram: '@studioglam.caba', hasActiveInstagram: true, reviewsCount: 126, rating: 4.7, verified: true },
-  },
-  {
-    name: 'Restaurante La Nonna', category: 'Restaurante', zone: 'CABA',
-    address: 'Gorriti 4890, Palermo, CABA',
-    location: { lat: -34.588, lng: -58.430 }, openNow: true,
-    signals: { phone: '011 4832-6600', website: 'https://lanonna-palermo.com', websiteQuality: 'aceptable', instagram: '@lanonna.palermo', hasActiveInstagram: true, reviewsCount: 512, rating: 4.4, verified: true },
-  },
-  {
-    name: 'Consultorio Odontológico Sonrisas', category: 'Odontología', zone: 'Adrogué',
-    address: 'Macías 165, Adrogué',
-    location: { lat: -34.804, lng: -58.386 }, openNow: true,
+    name: 'Consultorio Odontológico Sonrisas', category: 'Odontología', province: 'Buenos Aires', city: 'Adrogué', zone: 'Adrogué',
+    address: 'Macías 165, Adrogué', location: { lat: -34.804, lng: -58.386 }, openNow: true,
     signals: { phone: '011 4214-9080', whatsapp: '+54 9 11 4455-2211', reviewsCount: 58, rating: 4.8, verified: true },
-    stage: 'interesado', notes: 'Le interesa una web con turnos online. Reunión a coordinar.', lastContactDate: '2026-06-28', nextFollowUpDate: '2026-07-03', proposalSent: false,
+    stage: 'interesado', notes: 'Le interesa una web con turnos online. Reunión a coordinar.', lastContactDate: '2026-06-28', nextFollowUpDate: '2026-07-03', tags: ['turnos', 'caliente'],
   },
   {
-    name: 'Verdulería Orgánica Raíz', category: 'Verdulería', zone: 'Longchamps',
-    address: 'Roca 780, Longchamps',
-    location: { lat: -34.856, lng: -58.389 }, openNow: true,
-    signals: { instagram: '@raiz.organica', hasActiveInstagram: true, reviewsCount: 9, rating: 4.6 },
-  },
-  {
-    name: 'Taller Mecánico RPM', category: 'Taller mecánico', zone: 'Burzaco',
-    address: 'Av. Monteverde 1450, Burzaco',
-    location: { lat: -34.829, lng: -58.401 }, openNow: false,
-    signals: { phone: '011 4299-2100', reviewsCount: 73, rating: 4.2, verified: true },
-  },
-  {
-    name: 'Pastas Frescas La Emilia', category: 'Rotisería', zone: 'Lomas de Zamora',
-    address: 'Sarmiento 410, Lomas de Zamora',
-    location: { lat: -34.759, lng: -58.399 }, openNow: true,
-    signals: { whatsapp: '+54 9 11 6611-2233', instagram: '@laemilia.pastas', hasActiveInstagram: false, reviewsCount: 47, rating: 4.5 },
-  },
-  {
-    name: 'Estudio Contable Balance', category: 'Estudio contable', zone: 'CABA',
-    address: 'Lavalle 1620, CABA',
-    location: { lat: -34.604, lng: -58.393 }, openNow: false,
-    signals: { phone: '011 4373-5500', website: 'https://estudiobalance.com.ar', websiteQuality: 'vieja', linkedin: 'estudio-balance', reviewsCount: 28, rating: 4.0 },
-  },
-  {
-    name: 'Gimnasio CrossBox Sur', category: 'Gimnasio', zone: 'Burzaco',
-    address: 'Yrigoyen 4200, Burzaco',
-    location: { lat: -34.831, lng: -58.388 }, openNow: true,
+    name: 'Gimnasio CrossBox Sur', category: 'Gimnasio', province: 'Buenos Aires', city: 'Burzaco', zone: 'Burzaco',
+    address: 'Yrigoyen 4200, Burzaco', location: { lat: -34.831, lng: -58.388 }, openNow: true,
     signals: { whatsapp: '+54 9 11 9900-1122', instagram: '@crossbox.sur', hasActiveInstagram: true, reviewsCount: 96, rating: 4.9, verified: true },
     stage: 'respondio', notes: 'Respondió el DM, quiere saber precios.', lastContactDate: '2026-06-30', nextFollowUpDate: '2026-07-02',
   },
   {
-    name: 'Veterinaria Patitas', category: 'Veterinaria', zone: 'Adrogué',
-    address: 'Somellera 340, Adrogué',
-    location: { lat: -34.806, lng: -58.390 }, openNow: true,
-    signals: { phone: '011 4294-7788', instagram: '@vetpatitas.adrogue', hasActiveInstagram: true, reviewsCount: 64, rating: 4.8, verified: true },
+    name: 'Restaurante La Nonna', category: 'Restaurante', province: 'CABA', city: 'Palermo', zone: 'Palermo',
+    address: 'Gorriti 4890, Palermo, CABA', location: { lat: -34.588, lng: -58.430 }, openNow: true,
+    signals: { phone: '011 4832-6600', website: 'https://lanonna-palermo.com', websiteQuality: 'aceptable', instagram: '@lanonna.palermo', hasActiveInstagram: true, reviewsCount: 512, rating: 4.4, verified: true },
   },
   {
-    name: 'Heladería Cremosa', category: 'Heladería', zone: 'Longchamps',
-    address: 'Av. H. Yrigoyen 13100, Longchamps',
-    location: { lat: -34.863, lng: -58.383 }, openNow: true,
-    signals: { whatsapp: '+54 9 11 5522-3344', instagram: '@cremosa.helados', hasActiveInstagram: true, reviewsCount: 38, rating: 4.7 },
-  },
-  {
-    name: 'Inmobiliaria Núñez & Asoc.', category: 'Inmobiliaria', zone: 'CABA',
-    address: 'Av. Cabildo 2280, Núñez, CABA',
-    location: { lat: -34.556, lng: -58.456 }, openNow: false,
-    signals: { phone: '011 4788-3300', website: 'https://nunezpropiedades.com.ar', websiteQuality: 'aceptable', reviewsCount: 71, rating: 4.2, verified: true },
-  },
-  {
-    name: 'Cerrajería 24hs Llave Maestra', category: 'Cerrajería', zone: 'Lomas de Zamora',
-    address: 'Boedo 155, Lomas de Zamora',
-    location: { lat: -34.761, lng: -58.408 }, openNow: true,
-    signals: { whatsapp: '+54 9 11 3322-7788', reviewsCount: 31, rating: 4.6 },
-    stage: 'perdido', notes: 'No le interesa, ya trabaja solo con recomendados.', lastContactDate: '2026-06-20',
-  },
-  {
-    name: 'Spa Urbano Zen', category: 'Spa', zone: 'CABA',
-    address: 'Thames 1450, Palermo, CABA',
-    location: { lat: -34.587, lng: -58.428 }, openNow: true,
-    signals: { whatsapp: '+54 9 11 4400-5500', instagram: '@zen.spa.urbano', hasActiveInstagram: true, reviewsCount: 154, rating: 4.9, verified: true },
-  },
-  {
-    name: 'Estudio Jurídico Torres', category: 'Abogado', zone: 'Lomas de Zamora',
-    address: 'Manuel Castro 220, Lomas de Zamora',
-    location: { lat: -34.763, lng: -58.402 }, openNow: false,
-    signals: { phone: '011 4292-1010', linkedin: 'estudio-torres', reviewsCount: 19, rating: 4.4 },
-  },
-  {
-    name: 'Indumentaria Urbana Kief', category: 'Indumentaria', zone: 'Adrogué',
-    address: 'Av. Espora 250, Adrogué',
-    location: { lat: -34.800, lng: -58.387 }, openNow: true,
-    signals: { instagram: '@kief.indumentaria', hasActiveInstagram: true, reviewsCount: 27, rating: 4.7 },
-  },
-  {
-    name: 'Turismo Aventura Sur', category: 'Turismo', zone: 'CABA',
-    address: 'Av. Corrientes 3200, CABA',
-    location: { lat: -34.603, lng: -58.410 }, openNow: true,
-    signals: { phone: '011 4861-2200', website: 'http://aventurasur.tur.ar', websiteQuality: 'vieja', instagram: '@aventurasur', hasActiveInstagram: true, reviewsCount: 88, rating: 4.5, verified: true },
+    name: 'Cervecería Patagonia Sur', category: 'Bar', province: 'Río Negro', city: 'Bariloche', zone: 'Bariloche',
+    address: 'Mitre 320, Bariloche', location: { lat: -41.133, lng: -71.310 }, openNow: true,
+    signals: { instagram: '@patagoniasur.beer', hasActiveInstagram: true, reviewsCount: 233, rating: 4.7, verified: true },
+    stage: 'nuevo', tags: ['turístico'],
   },
 ]
 
-export const MOCK_LEADS: Lead[] = RAW.map((r) => buildLead(r))
+// --- Generación determinística nacional ---
+const NAMES: Record<string, string[]> = {
+  default: ['Don', 'La', 'El', 'Nuevo', 'Central', 'Express', 'Premium', 'Sur', 'Norte'],
+}
+const SUFFIX = ['& Cía.', 'SRL', 'Center', 'Studio', 'Pro', 'Plus', 'Hnos.', '', '', '']
+
+/** RNG determinístico (mulberry32) para datos estables entre recargas. */
+function rng(seed: number) {
+  return function () {
+    seed |= 0
+    seed = (seed + 0x6d2b79f5) | 0
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
+}
+
+function pick<T>(arr: T[], r: number): T {
+  return arr[Math.floor(r * arr.length) % arr.length]
+}
+
+function jitter(base: number, r: number): number {
+  return base + (r - 0.5) * 0.06
+}
+
+function genBusiness(
+  province: string,
+  city: string,
+  lat: number,
+  lng: number,
+  category: string,
+  seed: number,
+): RawBusiness {
+  const r = rng(seed)
+  const nameCore = `${pick(NAMES.default, r())} ${category.split(' ')[0]} ${pick(SUFFIX, r())}`.trim()
+  const reviews = Math.floor(r() * 260)
+  const rating = Math.round((3.6 + r() * 1.3) * 10) / 10
+  const roll = r()
+  // Distribución: 45% sin web, 25% web vieja, 18% aceptable, 12% buena.
+  const website =
+    roll < 0.45
+      ? undefined
+      : `${roll < 0.7 ? 'http' : 'https'}://${category.toLowerCase().replace(/[^a-z]/g, '')}-${city.toLowerCase().replace(/[^a-z]/g, '').slice(0, 8)}.com.ar`
+  const websiteQuality = !website ? undefined : roll < 0.7 ? 'vieja' : roll < 0.88 ? 'aceptable' : 'moderna'
+  const hasIg = r() > 0.4
+  return {
+    name: nameCore,
+    category,
+    province,
+    city,
+    zone: city,
+    address: `${pick(['Av. San Martín', 'Belgrano', 'Mitre', 'Rivadavia', 'Sarmiento', 'España'], r())} ${100 + Math.floor(r() * 3800)}, ${city}`,
+    location: { lat: jitter(lat, r()), lng: jitter(lng, r()) },
+    openNow: r() > 0.4,
+    signals: {
+      website,
+      websiteQuality,
+      instagram: hasIg ? `@${category.toLowerCase().replace(/[^a-z]/g, '').slice(0, 6)}.${city.toLowerCase().replace(/[^a-z]/g, '').slice(0, 6)}` : undefined,
+      hasActiveInstagram: hasIg && r() > 0.3,
+      facebook: r() > 0.7 ? 'fb-page' : undefined,
+      reviewsCount: reviews,
+      rating,
+      phone: r() > 0.3 ? `0${Math.floor(r() * 3) + 2}${Math.floor(1000000 + r() * 8999999)}` : undefined,
+      whatsapp: r() > 0.45 ? `+54 9 11 ${Math.floor(1000 + r() * 8999)}-${Math.floor(1000 + r() * 8999)}` : undefined,
+      verified: r() > 0.55,
+    },
+  }
+}
+
+function generateNational(): RawBusiness[] {
+  const out: RawBusiness[] = []
+  let seed = 1337
+  ARGENTINA.forEach((prov, pi) => {
+    prov.cities.forEach((city, ci) => {
+      // 4-6 negocios por ciudad, rubros rotados.
+      const count = 4 + ((pi + ci) % 3)
+      for (let i = 0; i < count; i++) {
+        const category = CATEGORIES[(pi * 7 + ci * 3 + i * 5) % CATEGORIES.length]
+        out.push(genBusiness(prov.name, city.name, city.lat, city.lng, category, (seed += 101)))
+      }
+    })
+  })
+  return out
+}
+
+export const MOCK_LEADS: Lead[] = [...CURATED, ...generateNational()].map((r) =>
+  buildLead(r),
+)

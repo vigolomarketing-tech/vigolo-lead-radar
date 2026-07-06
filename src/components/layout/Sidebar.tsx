@@ -4,7 +4,9 @@ import { cn } from '../../utils/cn'
 
 const NAV = [
   { to: '/', label: 'Dashboard', icon: '◧', end: true },
+  { to: '/radar', label: 'Radar IA', icon: '🛰️' },
   { to: '/prospeccion', label: 'Prospección', icon: '⌖' },
+  { to: '/campanas', label: 'Campañas', icon: '🎯' },
   { to: '/mapa', label: 'Mapa', icon: '⊚' },
   { to: '/crm', label: 'CRM', icon: '▤' },
   { to: '/asesor', label: 'Asesor IA', icon: '✦' },

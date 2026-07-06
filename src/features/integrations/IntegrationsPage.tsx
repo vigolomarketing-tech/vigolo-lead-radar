@@ -5,15 +5,17 @@ import { INTEGRATIONS, type IntegrationDef } from '../../config/integrations'
 const CATEGORY_LABEL: Record<IntegrationDef['category'], string> = {
   datos: 'Fuentes de datos',
   ia: 'Inteligencia artificial',
+  infra: 'Base de datos / Infraestructura',
   crm: 'CRM',
   mensajeria: 'Mensajería',
   productividad: 'Productividad',
 }
 
 const ICONS: Record<string, string> = {
-  'google-places': '📍', openai: '✦', 'google-sheets': '📊', hubspot: '🧲',
-  notion: '📝', slack: '💬', discord: '🎮', whatsapp: '🟢', instagram: '📷',
-  email: '✉️', calendar: '📅',
+  'google-places': '📍', 'google-maps': '🗺️', openai: '✦', 'google-sheets': '📊',
+  hubspot: '🧲', notion: '📝', slack: '💬', discord: '🎮', whatsapp: '🟢',
+  instagram: '📷', email: '✉️', calendar: '📅', supabase: '🟩', postgres: '🐘',
+  firebase: '🔥',
 }
 
 export function IntegrationsPage() {

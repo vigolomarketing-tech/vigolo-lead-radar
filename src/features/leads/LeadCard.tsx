@@ -15,9 +15,9 @@ export function LeadCard({ lead }: { lead: Lead }) {
           <div className="min-w-0 flex-1">
             <h3 className="truncate font-semibold text-slate-100">{lead.name}</h3>
             <p className="truncate text-xs text-slate-400">
-              {lead.category} · {lead.zone}
+              {lead.category} · {lead.city}
             </p>
-            <p className="mt-0.5 truncate text-xs text-slate-500">{lead.address}</p>
+            <p className="mt-0.5 truncate text-xs text-slate-500">{lead.province}</p>
           </div>
         </div>
 

@@ -10,6 +10,39 @@ proceso comercial en un CRM profesional.
 
 ---
 
+## 🆕 Novedades 4.0 (producción)
+
+- **Backend / proxy real** (`server/`): Cloudflare Worker que protege las API
+  keys de **Google Places** y **OpenAI** y resuelve CORS. Con las keys cargadas
+  y `VITE_DATA_PROVIDER=google` / `VITE_AI_PROVIDER=openai`, los datos y la IA
+  pasan a ser **reales**. Sin keys, la app sigue 100% funcional en modo demo.
+  Deploy en 5 minutos — ver [`server/README.md`](server/README.md).
+- **Radar IA**: recorre Argentina provincia por provincia buscando
+  oportunidades y guarda las mejores automáticamente (con barra de progreso).
+- **Campañas**: organizá la prospección por objetivos (ej. "100 Barberías en
+  Córdoba") con negocios, contactados y conversión.
+- **Panel IA accionable**: el chat ejecuta acciones — "Buscame barberías sin
+  web en Córdoba" filtra y navega; "Generá una campaña de gimnasios en Rosario"
+  la crea.
+- **Análisis de competencia** por ciudad (ranking de reseñas, mejor web).
+- **Generador de DEMO**: crea una landing profesional personalizada para cada
+  negocio, lista para mostrarle al cliente.
+- **Seguimiento IA**: a quién contactar hoy, con qué canal y probabilidad de
+  respuesta.
+- **Metas** del mes (clientes y facturación) con progreso.
+
+## 🆕 Novedades 3.0
+
+- **Cobertura nacional**: búsqueda por provincia/ciudad/localidad en las 24
+  jurisdicciones + botón **"Buscar en toda Argentina"** (barrido provincia por
+  provincia con progreso). Dataset demo con cientos de negocios de todo el país.
+- **CRM ampliado**: prioridad, etiquetas y tareas por lead.
+- **Mapa profesional**: clustering + mapa de calor + filtro por provincia.
+- **Dashboard**: embudo de conversión + mejor provincia/ciudad/rubro.
+- **Filtros avanzados** (provincia, rubro, oportunidad, estado, prioridad).
+- **Exportar** también a **Google Sheets** y **Notion**.
+- **Rendimiento**: grilla **virtualizada** para miles de negocios.
+
 ## ✨ Módulos
 
 - **Dashboard ejecutivo** — KPIs, tasas de respuesta/cierre, facturación

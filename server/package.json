@@ -1,0 +1,13 @@
+{
+  "name": "vigolo-lead-radar-api",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Backend/proxy de Vigolo Lead Radar (Cloudflare Worker) para Google Places y OpenAI.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

@@ -1,13 +1,16 @@
 import { useRef, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { Button, Card, Input, Spinner } from '../../components/ui/primitives'
 import { aiAdvisor } from '../../services/ai/aiProvider'
 import { useLeadStore } from '../../store/useLeadStore'
+import { parseCommand, type ParsedCommand } from '../../lib/commandParser'
 import { cn } from '../../utils/cn'
 
 interface Msg {
   role: 'user' | 'ai'
   text: string
+  action?: ParsedCommand
 }
 
 const SUGGESTIONS = [
@@ -20,10 +23,13 @@ const SUGGESTIONS = [
 
 export function AdvisorPage() {
   const leads = useLeadStore((s) => s.leads)
+  const setFilters = useLeadStore((s) => s.setFilters)
+  const addCampaign = useLeadStore((s) => s.addCampaign)
+  const navigate = useNavigate()
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: 'ai',
-      text: 'Soy tu Asesor IA comercial. Analizo tus leads y te ayudo a priorizar, definir precios y responder objeciones. Preguntame lo que quieras 👇',
+      text: 'Soy tu Asesor IA comercial. Puedo analizar tus leads, priorizar, definir precios, responder objeciones y ejecutar acciones (buscar negocios, crear campañas). Probá: "Buscame barberías sin web en Córdoba" o "Generá una campaña de gimnasios en Rosario".',
     },
   ])
   const [input, setInput] = useState('')
@@ -35,12 +41,40 @@ export function AdvisorPage() {
     setMessages((m) => [...m, { role: 'user', text: question }])
     setInput('')
     setLoading(true)
+
+    // 1) ¿Es un comando accionable? (filtrar / crear campaña)
+    const cmd = parseCommand(question)
+    if (cmd.type !== 'none') {
+      const text =
+        cmd.type === 'campaign'
+          ? `Puedo crear esa campaña. Apretá el botón para confirmarla.`
+          : `Encontré ese segmento. Apretá para ver los negocios filtrados.`
+      setMessages((m) => [...m, { role: 'ai', text, action: cmd }])
+      setLoading(false)
+      requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }))
+      return
+    }
+
+    // 2) Si no, consulta al asesor (IA/local).
     try {
       const answer = await aiAdvisor(question, { leads })
       setMessages((m) => [...m, { role: 'ai', text: answer }])
     } finally {
       setLoading(false)
       requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }))
+    }
+  }
+
+  const runAction = (cmd: ParsedCommand) => {
+    if (cmd.type === 'filter' && cmd.filters) {
+      setFilters(cmd.filters)
+      navigate('/prospeccion')
+    } else if (cmd.type === 'campaign' && cmd.campaign) {
+      addCampaign({
+        name: `${cmd.campaign.target} ${cmd.campaign.category || 'negocios'}${cmd.campaign.province ? ' en ' + cmd.campaign.province : ''}`,
+        ...cmd.campaign,
+      })
+      navigate('/campanas')
     }
   }
 
@@ -59,6 +93,14 @@ export function AdvisorPage() {
                 )}
               >
                 {m.text}
+                {m.action && m.action.type !== 'none' && (
+                  <button
+                    onClick={() => runAction(m.action!)}
+                    className="mt-2 block w-full rounded-lg bg-electric-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-electric-400"
+                  >
+                    {m.action.label} →
+                  </button>
+                )}
               </div>
             </div>
           ))}
