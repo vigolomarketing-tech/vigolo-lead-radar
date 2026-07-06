@@ -4,7 +4,7 @@ import { LeadCard } from '../../features/leads/LeadCard'
 import type { Lead } from '../../types'
 
 const CARD_MIN = 320
-const ROW_H = 210
+const ROW_H = 236
 const GAP = 12
 
 /**

@@ -16,7 +16,7 @@ export function AppShell({
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar title={title} subtitle={subtitle} />
-        <main className="mx-auto w-full max-w-7xl flex-1 space-y-6 p-4 sm:p-6 animate-fade-in">
+        <main className="mx-auto w-full min-w-0 max-w-7xl flex-1 space-y-6 overflow-x-hidden p-4 sm:p-6 animate-fade-in">
           {children}
         </main>
         <footer className="border-t border-white/10 px-6 py-4 text-center text-xs text-slate-600">

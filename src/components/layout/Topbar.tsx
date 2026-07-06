@@ -6,9 +6,13 @@ import { cn } from '../../utils/cn'
 
 const MOBILE_NAV = [
   { to: '/', label: 'Inicio', end: true },
+  { to: '/radar', label: 'Radar' },
   { to: '/prospeccion', label: 'Buscar' },
+  { to: '/campanas', label: 'Campañas' },
+  { to: '/mapa', label: 'Mapa' },
   { to: '/crm', label: 'CRM' },
-  { to: '/asesor', label: 'IA' },
+  { to: '/asesor', label: 'Asesor' },
+  { to: '/integraciones', label: 'Integraciones' },
 ]
 
 export function Topbar({ title, subtitle }: { title: string; subtitle?: string }) {
