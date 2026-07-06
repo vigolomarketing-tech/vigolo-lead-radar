@@ -203,38 +203,44 @@ function GoalsCard() {
       <h3 className="mb-3 text-sm font-semibold text-slate-100">🎯 Metas del mes</h3>
       <div className="space-y-4">
         <div>
-          <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Clientes cerrados</span>
-            <span className="text-slate-300">
-              {stats.won} /{' '}
-              <input
-                type="number"
-                value={goals.clientsTarget}
-                onChange={(e) => setGoals({ ...goals, clientsTarget: Number(e.target.value) || 0 })}
-                className="w-14 rounded bg-white/5 px-1 text-right text-slate-100 focus:outline-none"
-              />
-            </span>
+          <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+            <span className="truncate text-slate-400">Clientes cerrados</span>
+            <span className="shrink-0 text-slate-300">{stats.won} / {goals.clientsTarget}</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
             <div className="h-full rounded-full bg-emerald-400" style={{ width: `${clientsPct}%` }} />
           </div>
         </div>
         <div>
-          <div className="mb-1 flex items-center justify-between text-xs">
-            <span className="text-slate-400">Facturación</span>
-            <span className="text-slate-300">
-              {formatCurrency(stats.realRevenue)} /{' '}
-              <input
-                type="number"
-                value={goals.revenueTarget}
-                onChange={(e) => setGoals({ ...goals, revenueTarget: Number(e.target.value) || 0 })}
-                className="w-24 rounded bg-white/5 px-1 text-right text-slate-100 focus:outline-none"
-              />
-            </span>
+          <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+            <span className="truncate text-slate-400">Facturación</span>
+            <span className="shrink-0 text-slate-300">{formatCurrency(stats.realRevenue)} / {formatCurrency(goals.revenueTarget)}</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
             <div className="h-full rounded-full bg-electric-400" style={{ width: `${revenuePct}%` }} />
           </div>
+        </div>
+
+        {/* Edición de metas (envuelve, nunca desborda) */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-3 text-xs text-slate-400">
+          <label className="flex items-center gap-1.5">
+            Meta clientes
+            <input
+              type="number"
+              value={goals.clientsTarget}
+              onChange={(e) => setGoals({ ...goals, clientsTarget: Number(e.target.value) || 0 })}
+              className="w-16 rounded bg-white/5 px-2 py-1 text-slate-100 focus:outline-none focus:ring-1 focus:ring-electric-400/40"
+            />
+          </label>
+          <label className="flex items-center gap-1.5">
+            Meta facturación
+            <input
+              type="number"
+              value={goals.revenueTarget}
+              onChange={(e) => setGoals({ ...goals, revenueTarget: Number(e.target.value) || 0 })}
+              className="w-28 rounded bg-white/5 px-2 py-1 text-slate-100 focus:outline-none focus:ring-1 focus:ring-electric-400/40"
+            />
+          </label>
         </div>
       </div>
     </Card>
