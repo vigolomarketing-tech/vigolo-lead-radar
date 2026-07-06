@@ -16,6 +16,7 @@ import { useLeadStore } from '../../store/useLeadStore'
 import { levelFromScore } from '../../lib/scoring'
 import { CRM_STAGE_ACCENT, CRM_STAGE_LABEL, CRM_STAGE_ORDER, OPPORTUNITY_HEX } from '../../lib/labels'
 import { formatCurrency, formatNumber, formatPercent } from '../../lib/format'
+import { suggestFollowUps } from '../../lib/followups'
 import type { CrmStage } from '../../types'
 
 export function DashboardPage() {
@@ -65,6 +66,12 @@ export function DashboardPage() {
           <p className="text-sm font-semibold text-slate-100">📍 {stats.bestCity}</p>
           <p className="text-sm font-semibold text-slate-100">🏷️ {stats.bestCategory}</p>
         </Card>
+      </div>
+
+      {/* Metas + Seguimiento IA */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <GoalsCard />
+        <FollowUpsCard />
       </div>
 
       {/* Embudo de conversión */}
@@ -182,6 +189,90 @@ function ConversionFunnel({ leads }: { leads: import('../../types').Lead[] }) {
         )
       })}
     </div>
+  )
+}
+
+function GoalsCard() {
+  const goals = useLeadStore((s) => s.goals)
+  const setGoals = useLeadStore((s) => s.setGoals)
+  const stats = useStats()
+  const clientsPct = goals.clientsTarget ? Math.min(100, (stats.won / goals.clientsTarget) * 100) : 0
+  const revenuePct = goals.revenueTarget ? Math.min(100, (stats.realRevenue / goals.revenueTarget) * 100) : 0
+  return (
+    <Card className="p-4">
+      <h3 className="mb-3 text-sm font-semibold text-slate-100">🎯 Metas del mes</h3>
+      <div className="space-y-4">
+        <div>
+          <div className="mb-1 flex items-center justify-between text-xs">
+            <span className="text-slate-400">Clientes cerrados</span>
+            <span className="text-slate-300">
+              {stats.won} /{' '}
+              <input
+                type="number"
+                value={goals.clientsTarget}
+                onChange={(e) => setGoals({ ...goals, clientsTarget: Number(e.target.value) || 0 })}
+                className="w-14 rounded bg-white/5 px-1 text-right text-slate-100 focus:outline-none"
+              />
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-emerald-400" style={{ width: `${clientsPct}%` }} />
+          </div>
+        </div>
+        <div>
+          <div className="mb-1 flex items-center justify-between text-xs">
+            <span className="text-slate-400">Facturación</span>
+            <span className="text-slate-300">
+              {formatCurrency(stats.realRevenue)} /{' '}
+              <input
+                type="number"
+                value={goals.revenueTarget}
+                onChange={(e) => setGoals({ ...goals, revenueTarget: Number(e.target.value) || 0 })}
+                className="w-24 rounded bg-white/5 px-1 text-right text-slate-100 focus:outline-none"
+              />
+            </span>
+          </div>
+          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="h-full rounded-full bg-electric-400" style={{ width: `${revenuePct}%` }} />
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
+function FollowUpsCard() {
+  const leads = useLeadStore((s) => s.leads)
+  const select = useLeadStore((s) => s.select)
+  const suggestions = suggestFollowUps(leads, 6)
+  return (
+    <Card className="p-4">
+      <h3 className="mb-1 text-sm font-semibold text-slate-100">✦ Seguimiento IA · a contactar hoy</h3>
+      <p className="mb-3 text-xs text-slate-500">Priorizado por probabilidad de respuesta.</p>
+      {suggestions.length === 0 ? (
+        <p className="py-6 text-center text-xs text-slate-500">Todo al día. No hay seguimientos pendientes. 🎉</p>
+      ) : (
+        <ul className="space-y-2">
+          {suggestions.map((s) => (
+            <li key={s.lead.id}>
+              <button
+                onClick={() => select(s.lead.id)}
+                className="flex w-full items-center gap-3 rounded-lg border border-white/10 bg-white/[0.02] p-2.5 text-left transition-colors hover:border-electric-400/40"
+              >
+                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-electric-500/15 text-xs font-bold text-electric-300">
+                  {s.responseProbability}%
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-slate-100">{s.lead.name}</span>
+                  <span className="block truncate text-xs text-slate-500">{s.reason}</span>
+                </span>
+                {s.overdue && <span className="shrink-0 rounded-full bg-rose-500/15 px-2 py-0.5 text-[10px] font-bold text-rose-300">vencido</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
   )
 }
 

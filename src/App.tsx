@@ -2,6 +2,8 @@ import { lazy, Suspense } from 'react'
 import { HashRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DashboardPage } from './features/dashboard/DashboardPage'
 import { ProspectingPage } from './features/prospecting/ProspectingPage'
+import { RadarPage } from './features/radar/RadarPage'
+import { CampaignsPage } from './features/campaigns/CampaignsPage'
 import { CrmBoardPage } from './features/crm/CrmBoardPage'
 import { AdvisorPage } from './features/advisor/AdvisorPage'
 import { IntegrationsPage } from './features/integrations/IntegrationsPage'
@@ -26,7 +28,9 @@ export default function App() {
     <HashRouter>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
+        <Route path="/radar" element={<RadarPage />} />
         <Route path="/prospeccion" element={<ProspectingPage />} />
+        <Route path="/campanas" element={<CampaignsPage />} />
         <Route
           path="/mapa"
           element={

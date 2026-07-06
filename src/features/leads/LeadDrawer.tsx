@@ -7,6 +7,7 @@ import { AnalysisPanel } from '../analysis/AnalysisPanel'
 import { MessagesPanel } from '../messages/MessagesPanel'
 import { CrmPanel } from './CrmPanel'
 import { useLeadStore } from '../../store/useLeadStore'
+import { generateDemoHtml, openDemo } from '../../services/demo/generateDemo'
 import { cn } from '../../utils/cn'
 import type { Lead } from '../../types'
 
@@ -32,6 +33,13 @@ export function LeadDrawer() {
 function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>('resumen')
   const removeLead = useLeadStore((s) => s.removeLead)
+  const addDemo = useLeadStore((s) => s.addDemo)
+
+  const createDemo = () => {
+    const html = generateDemoHtml(lead)
+    addDemo({ leadId: lead.id, leadName: lead.name, html })
+    openDemo(html)
+  }
 
   return (
     <div className="flex h-full flex-col">
@@ -92,9 +100,14 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         >
           Eliminar
         </Button>
-        <Button variant="secondary" size="sm" onClick={onClose}>
-          Cerrar
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="success" size="sm" onClick={createDemo} title="Generar una landing de muestra para el cliente">
+            ✨ Crear demo
+          </Button>
+          <Button variant="secondary" size="sm" onClick={onClose}>
+            Cerrar
+          </Button>
+        </div>
       </div>
     </div>
   )

@@ -7,7 +7,7 @@ import { PROVIDERS } from './app'
 export interface IntegrationDef {
   id: string
   name: string
-  category: 'datos' | 'ia' | 'crm' | 'mensajeria' | 'productividad'
+  category: 'datos' | 'ia' | 'crm' | 'mensajeria' | 'productividad' | 'infra'
   description: string
   /** Cómo se determina si está "conectada" (por ahora, por env). */
   connected: boolean
@@ -32,6 +32,38 @@ export const INTEGRATIONS: IntegrationDef[] = [
     description: 'Análisis, auditorías y mensajes generados con IA.',
     connected: PROVIDERS.ai === 'openai' && Boolean(PROVIDERS.apiBaseUrl),
     docsHint: 'Configurar VITE_AI_PROVIDER=openai y el proxy backend.',
+  },
+  {
+    id: 'google-maps',
+    name: 'Google Maps',
+    category: 'datos',
+    description: 'Geocoding y detalles de lugares (vía backend/proxy).',
+    connected: PROVIDERS.data === 'google' && Boolean(PROVIDERS.apiBaseUrl),
+    docsHint: 'Comparte la misma key de Google (server-side).',
+  },
+  {
+    id: 'supabase',
+    name: 'Supabase',
+    category: 'infra',
+    description: 'Base de datos + auth para persistir leads en la nube.',
+    connected: Boolean(env.VITE_SUPABASE_URL),
+    docsHint: 'Configurar VITE_SUPABASE_URL / anon key (a futuro).',
+  },
+  {
+    id: 'postgres',
+    name: 'PostgreSQL',
+    category: 'infra',
+    description: 'Base de datos relacional para escalar a miles de leads.',
+    connected: false,
+    docsHint: 'Vía backend propio (Supabase/Neon/RDS).',
+  },
+  {
+    id: 'firebase',
+    name: 'Firebase',
+    category: 'infra',
+    description: 'Alternativa de base de datos + auth en tiempo real.',
+    connected: false,
+    docsHint: 'Requiere proyecto Firebase (a futuro).',
   },
   {
     id: 'google-sheets',

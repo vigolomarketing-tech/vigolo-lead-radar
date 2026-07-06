@@ -47,7 +47,9 @@ function applyFilters(leads: Lead[], p: SearchParams): Lead[] {
 }
 
 async function searchMock(p: SearchParams): Promise<Lead[]> {
-  await delay(650)
+  // Latencia baja: búsqueda simple ágil y barrido nacional (~24 llamadas)
+  // que igual muestra progreso sin demorar de más.
+  await delay(220)
   return applyFilters(MOCK_LEADS, p)
 }
 

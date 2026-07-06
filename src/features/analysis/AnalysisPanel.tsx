@@ -3,6 +3,7 @@ import { Button, Card, ProgressBar } from '../../components/ui/primitives'
 import { Spinner } from '../../components/ui/primitives'
 import { useLeadStore } from '../../store/useLeadStore'
 import { generateAuditPdf } from '../../services/audit/pdf'
+import { analyzeCompetition } from '../../lib/competition'
 import type { AuditFinding, Lead } from '../../types'
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -105,8 +106,44 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
         </div>
       </Card>
 
+      <CityCompetition lead={lead} />
+
       {report.competitor && <CompetitorCompare lead={lead} />}
     </div>
+  )
+}
+
+function CityCompetition({ lead }: { lead: Lead }) {
+  const allLeads = useLeadStore((s) => s.leads)
+  const insight = analyzeCompetition(lead, allLeads)
+  if (!insight) return null
+  return (
+    <Card className="p-4">
+      <h4 className="mb-1 text-sm font-semibold text-slate-100">
+        Competencia en {lead.city}
+      </h4>
+      <p className="mb-3 text-sm text-slate-300">{insight.summary}</p>
+      <div className="grid grid-cols-3 gap-2 text-center">
+        <div className="rounded-lg bg-white/5 py-2">
+          <div className="text-lg font-bold text-slate-50">#{insight.reviewsRank}</div>
+          <div className="text-[10px] text-slate-400">en reseñas</div>
+        </div>
+        <div className="rounded-lg bg-white/5 py-2">
+          <div className="text-lg font-bold text-slate-50">{insight.peers}</div>
+          <div className="text-[10px] text-slate-400">competidores</div>
+        </div>
+        <div className="rounded-lg bg-white/5 py-2">
+          <div className="text-lg font-bold text-slate-50">{insight.webBetterThan}%</div>
+          <div className="text-[10px] text-slate-400">web superada</div>
+        </div>
+      </div>
+      {(insight.bestReviews || insight.bestWeb) && (
+        <div className="mt-3 space-y-1 text-xs text-slate-400">
+          {insight.bestReviews && <p>🏆 Más reseñas: <span className="text-slate-200">{insight.bestReviews.name}</span> ({insight.bestReviews.signals.reviewsCount})</p>}
+          {insight.bestWeb && <p>🌐 Mejor web: <span className="text-slate-200">{insight.bestWeb.name}</span></p>}
+        </div>
+      )}
+    </Card>
   )
 }
 

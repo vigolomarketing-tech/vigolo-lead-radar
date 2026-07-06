@@ -12,8 +12,11 @@ import { uid } from '../lib/id'
 import { levelFromScore } from '../lib/scoring'
 import { ARGENTINA } from '../config/argentina'
 import type {
+  Campaign,
   CrmEvent,
   CrmStage,
+  Demo,
+  Goals,
   Lead,
   LeadFiltersState,
   Priority,
@@ -61,6 +64,15 @@ interface LeadState {
   lastSearch: SearchParams | null
   analyzingIds: string[]
   sweepProgress: { province: string; done: number; total: number } | null
+  campaigns: Campaign[]
+  goals: Goals
+  demos: Demo[]
+
+  addCampaign: (c: Omit<Campaign, 'id' | 'createdAt'>) => void
+  removeCampaign: (id: string) => void
+  setGoals: (goals: Goals) => void
+  addDemo: (demo: Omit<Demo, 'id' | 'createdAt'>) => void
+  removeDemo: (id: string) => void
 
   setFilters: (patch: Partial<LeadFiltersState>) => void
   resetFilters: () => void
@@ -95,6 +107,28 @@ export const useLeadStore = create<LeadState>()(
       lastSearch: null,
       analyzingIds: [],
       sweepProgress: null,
+      campaigns: [],
+      goals: { clientsTarget: 10, revenueTarget: 5000000 },
+      demos: [],
+
+      addCampaign: (c) =>
+        set((s) => ({
+          campaigns: [
+            { ...c, id: uid('camp'), createdAt: new Date().toISOString() },
+            ...s.campaigns,
+          ],
+        })),
+      removeCampaign: (id) =>
+        set((s) => ({ campaigns: s.campaigns.filter((c) => c.id !== id) })),
+      setGoals: (goals) => set({ goals }),
+      addDemo: (demo) =>
+        set((s) => ({
+          demos: [
+            { ...demo, id: uid('demo'), createdAt: new Date().toISOString() },
+            ...s.demos.filter((d) => d.leadId !== demo.leadId),
+          ],
+        })),
+      removeDemo: (id) => set((s) => ({ demos: s.demos.filter((d) => d.id !== id) })),
 
       setFilters: (patch) =>
         set((s) => ({ filters: { ...s.filters, ...patch } })),
@@ -303,8 +337,13 @@ export const useLeadStore = create<LeadState>()(
       resetDemo: () => set({ leads: MOCK_LEADS, filters: EMPTY_FILTERS, selectedId: null }),
     }),
     {
-      name: 'vigolo-lead-radar:v3',
-      partialize: (s) => ({ leads: s.leads }),
+      name: 'vigolo-lead-radar:v4',
+      partialize: (s) => ({
+        leads: s.leads,
+        campaigns: s.campaigns,
+        goals: s.goals,
+        demos: s.demos,
+      }),
     },
   ),
 )

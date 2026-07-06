@@ -240,6 +240,32 @@ export interface DashboardStats {
   bestCategory: string
 }
 
+/** Campaña de prospección (ej: "100 Barberías en Córdoba"). */
+export interface Campaign {
+  id: string
+  name: string
+  province: string
+  city: string
+  category: string
+  target: number
+  createdAt: string
+}
+
+/** Metas / objetivos comerciales. */
+export interface Goals {
+  clientsTarget: number
+  revenueTarget: number
+}
+
+/** Demo (landing) generada para un negocio. */
+export interface Demo {
+  id: string
+  leadId: string
+  leadName: string
+  html: string
+  createdAt: string
+}
+
 export interface GeneratedMessage {
   channel: MessageChannel
   label: string
