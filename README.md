@@ -185,6 +185,45 @@ sola al modo demo/local — nunca se rompe.**
 
 ---
 
+## 📲 Instalar como app (PWA)
+
+Vigolo Lead Radar es una **PWA instalable**: se puede agregar a la pantalla de
+inicio del celular o al escritorio y abre en modo app (pantalla completa, sin
+barra del navegador). Se mantiene el mismo deploy de GitHub Pages.
+
+### Android (Chrome)
+1. Abrí la URL en Chrome.
+2. Tocá el botón **“Instalar app”** que aparece abajo (o menú ⋮ → *Instalar
+   aplicación* / *Agregar a pantalla de inicio*).
+3. Confirmá. Queda como app con su ícono.
+
+### iPhone / iPad (Safari)
+1. Abrí la URL en **Safari**.
+2. Tocá **Compartir** ⬆️ → **“Agregar a pantalla de inicio”** → **Agregar**.
+   (El botón *Instalar app* de la web te muestra estos mismos pasos.)
+
+### Desktop (Chrome / Edge)
+1. Abrí la URL.
+2. Clic en el ícono de **instalar** en la barra de direcciones (o menú →
+   *Instalar Vigolo Lead Radar*), o el botón **“Instalar app”**.
+
+> El botón *Instalar app* aparece solo si el navegador permite la instalación y
+> se oculta si la app ya está instalada.
+
+### Qué funciona offline
+- Carga de la app (shell), navegación entre secciones y **datos guardados**
+  (leads, CRM, campañas y metas persistidos en el dispositivo).
+- **No** funciona sin conexión: la búsqueda real (Google Places) y la IA real
+  (OpenAI), que necesitan internet. Al perder conexión aparece un aviso y la app
+  sigue usable con lo guardado.
+
+### Cambiar íconos y colores
+- **Colores**: `theme_color` (#3EA6FF) y `background_color` (#050816) en el
+  `manifest` de `vite.config.ts`, más `theme-color` en `index.html`.
+- **Íconos**: editá `scripts/generate-icons.mjs` (colores/diseño del radar) y
+  regenerá con `node scripts/generate-icons.mjs` (usa `sharp`). Se crean en
+  `public/icons/` (192, 512, maskable, apple-touch y splashes iOS).
+
 ## 🔑 Variables de entorno
 
 | Variable | Dónde | Para qué |
