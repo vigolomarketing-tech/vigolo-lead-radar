@@ -8,6 +8,7 @@ import { CrmBoardPage } from './features/crm/CrmBoardPage'
 import { AdvisorPage } from './features/advisor/AdvisorPage'
 import { IntegrationsPage } from './features/integrations/IntegrationsPage'
 import { LeadDrawer } from './features/leads/LeadDrawer'
+import { PwaControls } from './pwa/PwaControls'
 import { Spinner } from './components/ui/primitives'
 
 // El mapa (leaflet) se carga bajo demanda para aligerar el bundle inicial.
@@ -46,6 +47,8 @@ export default function App() {
       </Routes>
       {/* Drawer global disponible en todas las vistas */}
       <LeadDrawer />
+      {/* PWA: banner offline + botón instalar */}
+      <PwaControls />
     </HashRouter>
   )
 }
