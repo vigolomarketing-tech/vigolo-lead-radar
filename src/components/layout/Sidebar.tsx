@@ -3,14 +3,14 @@ import { APP } from '../../config/app'
 import { cn } from '../../utils/cn'
 
 const NAV = [
-  { to: '/', label: 'Dashboard', icon: '◧', end: true },
-  { to: '/radar', label: 'Radar IA', icon: '🛰️' },
-  { to: '/prospeccion', label: 'Prospección', icon: '⌖' },
-  { to: '/campanas', label: 'Campañas', icon: '🎯' },
-  { to: '/mapa', label: 'Mapa', icon: '⊚' },
-  { to: '/crm', label: 'CRM', icon: '▤' },
-  { to: '/asesor', label: 'Asesor IA', icon: '✦' },
-  { to: '/integraciones', label: 'Integraciones', icon: '⚡' },
+  { to: '/', label: 'Dashboard', icon: 'D', end: true },
+  { to: '/radar', label: 'Radar IA', icon: 'R' },
+  { to: '/prospeccion', label: 'Prospeccion', icon: 'P' },
+  { to: '/campanas', label: 'Campanas', icon: 'C' },
+  { to: '/mapa', label: 'Mapa', icon: 'M' },
+  { to: '/crm', label: 'CRM', icon: 'CRM' },
+  { to: '/asesor', label: 'Asesor IA', icon: 'IA' },
+  { to: '/integraciones', label: 'Integraciones', icon: 'API' },
 ]
 
 export function Sidebar() {
@@ -32,7 +32,7 @@ export function Sidebar() {
               )
             }
           >
-            <span className="text-base opacity-80">{item.icon}</span>
+            <span className="w-7 text-xs font-bold opacity-80">{item.icon}</span>
             {item.label}
           </NavLink>
         ))}
@@ -40,7 +40,7 @@ export function Sidebar() {
 
       <div className="mt-auto rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-slate-400">
         <p className="font-semibold text-slate-200">{APP.agency.name}</p>
-        <p className="mt-1">Plataforma de prospección impulsada por IA.</p>
+        <p className="mt-1">Prospeccion industrial impulsada por IA.</p>
       </div>
     </aside>
   )
@@ -51,16 +51,11 @@ export function Brand() {
     <div className="flex items-center gap-3">
       <div className="relative grid h-10 w-10 place-items-center overflow-hidden rounded-xl bg-base-900 ring-1 ring-inset ring-electric-400/40">
         <span className="absolute inset-0 animate-radar bg-[conic-gradient(from_0deg,transparent_0deg,rgba(62,166,255,0.35)_60deg,transparent_120deg)]" />
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="relative z-10" aria-hidden>
-          <circle cx="12" cy="12" r="9" stroke="#3EA6FF" strokeWidth="1.4" opacity="0.5" />
-          <circle cx="12" cy="12" r="4.5" stroke="#3EA6FF" strokeWidth="1.4" opacity="0.8" />
-          <circle cx="12" cy="12" r="1.6" fill="#3EA6FF" />
-          <circle cx="17" cy="7" r="1.4" fill="#22c55e" />
-        </svg>
+        <span className="relative z-10 text-sm font-black tracking-tight text-electric-300">2G</span>
       </div>
       <div>
         <p className="text-sm font-extrabold leading-tight text-slate-50">
-          Vigolo <span className="text-electric-400">Lead Radar</span>
+          2GTech3D <span className="text-electric-400">Lead Radar</span>
         </p>
         <p className="text-[11px] text-slate-500">{APP.tagline}</p>
       </div>

@@ -26,6 +26,7 @@ function applyFilters(leads: Lead[], p: SearchParams): Lead[] {
   const cat = normalize(p.category)
   const prov = normalize(p.province)
   const city = normalize(p.city)
+  const machine = normalize(p.recommendedMachine)
   return leads.filter((l) => {
     // Modo nacional ignora provincia/ciudad/texto de ubicación.
     if (!p.nationwide) {
@@ -33,7 +34,9 @@ function applyFilters(leads: Lead[], p: SearchParams): Lead[] {
       if (city && normalize(l.city) !== city) return false
       if (zone && !normalize(`${l.zone} ${l.city} ${l.address}`).includes(zone)) return false
     }
-    if (cat && !normalize(`${l.category} ${l.categories?.join(' ') ?? ''}`).includes(cat)) return false
+    if (cat && !normalize(`${l.category} ${l.industry} ${l.categories?.join(' ') ?? ''}`).includes(cat)) return false
+    if (machine && normalize(l.recommendedMachineId) !== machine) return false
+    if (p.minScore && l.score < p.minScore) return false
     if (p.minRating && (l.signals.rating ?? 0) < p.minRating) return false
     if (p.minReviews && (l.signals.reviewsCount ?? 0) < p.minReviews) return false
     if (p.openNow && !l.openingHours?.openNow) return false
@@ -79,7 +82,7 @@ async function searchGoogle(params: SearchParams): Promise<Lead[]> {
   })
   if (!res.ok) throw new Error(`Backend respondió ${res.status}`)
   const raw: RawBusiness[] = await res.json()
-  return raw.map((r) => buildLead({ ...r, source: 'google' }))
+  return applyFilters(raw.map((r) => buildLead({ ...r, source: 'google' })), params)
 }
 
 export async function searchBusinesses(params: SearchParams): Promise<Lead[]> {

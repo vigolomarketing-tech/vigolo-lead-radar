@@ -1,5 +1,5 @@
 // =====================================================================
-// Vigolo Lead Radar — Modelo de dominio (v2 SaaS)
+// 2GTech3D Lead Radar - Modelo de dominio industrial
 // =====================================================================
 
 export type OpportunityLevel = 'alta' | 'media' | 'baja'
@@ -10,7 +10,17 @@ export type DigitalPresence =
   | 'web-aceptable'
   | 'buen-potencial'
 
-/** Pipeline comercial estilo HubSpot. */
+export type CompanySize = 'micro' | 'pyme' | 'industrial' | 'gran-industria'
+
+export type IndustrialMaturity =
+  | 'artesanal'
+  | 'semi-industrial'
+  | 'industrial'
+  | 'alta-produccion'
+
+export type MachinePriority = 'critica' | 'alta' | 'media' | 'baja'
+
+/** Pipeline comercial estilo HubSpot, adaptado a venta consultiva B2B. */
 export type CrmStage =
   | 'nuevo'
   | 'contactado'
@@ -31,14 +41,12 @@ export type MessageChannel =
   | 'seguimiento-3'
   | 'obj-precio'
   | 'obj-pensarlo'
-  | 'obj-ya-tengo-web'
+  | 'obj-ya-tengo-maquina'
   | 'obj-no-responde'
   | 'quiere-reunion'
 
-/** Prioridad comercial manual. */
 export type Priority = 'alta' | 'media' | 'baja'
 
-/** Tarea del CRM. */
 export interface Task {
   id: string
   text: string
@@ -46,19 +54,17 @@ export interface Task {
   dueDate?: string
 }
 
-/** Ubicación normalizada de un negocio. */
 export interface GeoLocation {
   lat: number
   lng: number
 }
 
-/** Horario simplificado. */
 export interface OpeningHours {
   openNow?: boolean
   weekdayText?: string[]
 }
 
-/** Señales crudas de un negocio (vienen del provider: mock o Google Places). */
+/** Senales crudas de una empresa industrial. */
 export interface BusinessSignals {
   website?: string
   websiteQuality?: 'vieja' | 'aceptable' | 'moderna'
@@ -72,91 +78,99 @@ export interface BusinessSignals {
   whatsapp?: string
   verified?: boolean
   photos?: string[]
+
+  companySize?: CompanySize
+  industrialMaturity?: IndustrialMaturity
+  currentMachinery?: string[]
+  materials?: string[]
+  productionSignals?: string[]
+  hasCnc?: boolean
+  hasLaser?: boolean
+  exportsOrLargeClients?: boolean
 }
 
-/** Un factor individual del score, con su aporte y explicación. */
 export interface ScoreFactor {
   key: string
   label: string
-  points: number // aporte (puede ser negativo)
+  points: number
   detail: string
 }
 
 export interface ScoreResult {
-  score: number // 1..100
+  score: number // 0..100
   level: OpportunityLevel
   digitalPresence: DigitalPresence
   factors: ScoreFactor[]
-  headline: string // resumen de una línea
+  headline: string
 }
 
-/** Hallazgo de la auditoría / diagnóstico. */
 export interface AuditFinding {
   id: string
-  area: 'web' | 'seo' | 'performance' | 'social' | 'confianza' | 'conversion'
+  area:
+    | 'maquina'
+    | 'produccion'
+    | 'materiales'
+    | 'financiacion'
+    | 'contacto'
+    | 'ubicacion'
+    | 'competencia'
   title: string
   status: 'ok' | 'warn' | 'fail'
   priority: 'alta' | 'media' | 'baja'
-  impact: string // cómo impacta / por qué pierde clientes
-  solution: string // cómo lo resuelve una web nueva
+  impact: string
+  solution: string
 }
 
-/** Comparativa contra un estándar "Vigolo". */
 export interface CompetitorDimension {
   dimension: string
-  theirs: number // 0..100
-  vigolo: number // 0..100
+  theirs: number
+  target: number
 }
 
-/** Informe completo generado por la IA analista. */
 export interface AnalysisReport {
   generatedAt: string
   summary: string
   findings: AuditFinding[]
   competitor?: CompetitorDimension[]
   metrics: {
-    performance: number
-    seo: number
-    ux: number
-    branding: number
-    conversion: number
-    mobile: number
-    trust: number
+    machineFit: number
+    industrialNeed: number
+    productionScale: number
+    materialFit: number
+    budgetFit: number
+    urgency: number
+    contactability: number
   }
 }
 
-/** Nota / evento del historial del lead. */
 export interface CrmEvent {
   id: string
-  at: string // ISO
+  at: string
   type: 'nota' | 'contacto' | 'estado' | 'sistema'
   text: string
 }
 
-/** Recordatorio / seguimiento. */
 export interface Reminder {
   id: string
-  date: string // ISO date
+  date: string
   text: string
   done: boolean
 }
 
-/** Lead = negocio potencial con análisis + CRM. */
 export interface Lead {
   id: string
-  // Identidad del negocio
   name: string
   category: string
+  industry: string
   province: string
   city: string
-  zone: string // barrio / localidad (compat.)
+  zone: string
   address: string
   location?: GeoLocation
   mapsUrl?: string
   openingHours?: OpeningHours
   categories?: string[]
 
-  // Señales + score (calculado)
   signals: BusinessSignals
   score: number
   scoreLevel: OpportunityLevel
@@ -164,10 +178,19 @@ export interface Lead {
   scoreHeadline: string
   scoreFactors: ScoreFactor[]
 
-  // Análisis IA (opcional hasta que se ejecute "Analizar")
+  companySize: CompanySize
+  industrialMaturity: IndustrialMaturity
+  recommendedMachineId: string
+  recommendedMachineName: string
+  recommendedMachineCategory: string
+  recommendedMachinePriority: MachinePriority
+  recommendedApplications: string[]
+  recommendedMaterials: string[]
+  purchasePotential: OpportunityLevel
+  ticketRange: string
+
   analysis?: AnalysisReport
 
-  // CRM
   stage: CrmStage
   priority: Priority
   tags: string[]
@@ -177,16 +200,14 @@ export interface Lead {
   reminders: Reminder[]
   lastContactDate?: string
   nextFollowUpDate?: string
-  potentialValue: number // ARS/USD estimado
-  closeProbability: number // 0..100
+  potentialValue: number
+  closeProbability: number
   proposalSent: boolean
 
-  // Metadata
   createdAt: string
   source: 'mock' | 'google'
 }
 
-// --- Búsqueda / filtros ---
 export type LocationKind =
   | 'ciudad'
   | 'barrio'
@@ -195,12 +216,14 @@ export type LocationKind =
   | 'codigo-postal'
 
 export interface SearchParams {
-  nationwide: boolean // "Buscar en toda Argentina"
-  province: string // '' = todas
-  city: string // '' = todas
-  query: string // texto libre de ubicación (barrio, CP, etc.)
+  nationwide: boolean
+  province: string
+  city: string
+  query: string
   locationKind: LocationKind
   category: string
+  recommendedMachine: string
+  minScore: number
   radiusKm: number
   minRating: number
   minReviews: number
@@ -214,10 +237,12 @@ export interface SearchParams {
 export interface LeadFiltersState {
   query: string
   category: string
+  recommendedMachine: string
   province: string
   city: string
   zone: string
   opportunity: OpportunityLevel | ''
+  minScore: number
   stage: CrmStage | ''
   priority: Priority | ''
 }
@@ -238,26 +263,26 @@ export interface DashboardStats {
   bestCity: string
   bestZone: string
   bestCategory: string
+  bestMachine: string
+  bestIndustry: string
 }
 
-/** Campaña de prospección (ej: "100 Barberías en Córdoba"). */
 export interface Campaign {
   id: string
   name: string
   province: string
   city: string
   category: string
+  recommendedMachine: string
   target: number
   createdAt: string
 }
 
-/** Metas / objetivos comerciales. */
 export interface Goals {
   clientsTarget: number
   revenueTarget: number
 }
 
-/** Demo (landing) generada para un negocio. */
 export interface Demo {
   id: string
   leadId: string

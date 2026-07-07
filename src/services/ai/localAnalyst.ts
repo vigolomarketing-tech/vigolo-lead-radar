@@ -1,12 +1,11 @@
 // =====================================================================
 // Analista IA local (fallback sin backend)
-// ---------------------------------------------------------------------
-// Genera informes, diagnósticos, comparativas y mensajes de forma
-// determinística a partir de las señales del lead. Cuando se conecte
-// OpenAI (aiProvider), estas funciones son el fallback / plantilla.
+// Genera diagnosticos, recomendaciones y mensajes para venta consultiva
+// de maquinas 2GTech3D a empresas industriales argentinas.
 // =====================================================================
 
 import { APP } from '../../config/app'
+import { MACHINE_BY_ID } from '../../config/machines'
 import { uid } from '../../lib/id'
 import type {
   AnalysisReport,
@@ -21,167 +20,201 @@ function clamp(n: number) {
   return Math.max(3, Math.min(98, Math.round(n)))
 }
 
-/** Deriva métricas 0..100 de presencia digital desde las señales. */
+const MATURITY_SCORE = {
+  artesanal: 35,
+  'semi-industrial': 62,
+  industrial: 82,
+  'alta-produccion': 92,
+} as const
+
+const SIZE_SCORE = {
+  micro: 38,
+  pyme: 62,
+  industrial: 82,
+  'gran-industria': 92,
+} as const
+
 function deriveMetrics(lead: Lead): AnalysisReport['metrics'] {
-  const p = lead.digitalPresence
-  const base =
-    p === 'sin-web' ? 8 : p === 'web-vieja' ? 32 : p === 'web-aceptable' ? 58 : 82
-  const ig = lead.signals.hasActiveInstagram ? 12 : 0
-  const rep = Math.min(15, (lead.signals.rating ?? 0) * 3)
+  const hasContact = lead.signals.whatsapp || lead.signals.phone
+  const hasProductionSignals =
+    (lead.signals.productionSignals?.length ?? 0) > 0 ||
+    lead.signals.hasCnc ||
+    lead.signals.hasLaser ||
+    lead.signals.exportsOrLargeClients
+  const materials = lead.signals.materials?.length
+    ? 86
+    : lead.recommendedMaterials.length > 0
+      ? 70
+      : 45
+
   return {
-    performance: clamp(base + (p === 'web-vieja' ? -8 : 0)),
-    seo: clamp(base - 6),
-    ux: clamp(base + 2),
-    branding: clamp(base + ig - 4),
-    conversion: clamp(base - 10 + (lead.signals.whatsapp ? 6 : 0)),
-    mobile: clamp(base - 4),
-    trust: clamp(base + rep),
+    machineFit: clamp(lead.score + 8),
+    industrialNeed: clamp(MATURITY_SCORE[lead.industrialMaturity] + (hasProductionSignals ? 8 : -4)),
+    productionScale: clamp(SIZE_SCORE[lead.companySize] + (lead.signals.exportsOrLargeClients ? 8 : 0)),
+    materialFit: clamp(materials),
+    budgetFit: clamp(lead.potentialValue >= 30000000 ? SIZE_SCORE[lead.companySize] : SIZE_SCORE[lead.companySize] + 8),
+    urgency: clamp(lead.score),
+    contactability: clamp(hasContact ? 82 : lead.signals.linkedin || lead.signals.instagram ? 62 : 38),
   }
 }
 
-const CATALOG: Omit<AuditFinding, 'id'>[] = [
-  { area: 'web', title: 'No tiene sitio web propio', status: 'fail', priority: 'alta', impact: 'Pierde a todos los clientes que buscan en Google antes de comprar y no encuentran un sitio serio.', solution: 'Una web profesional captura esa demanda y la convierte en consultas por WhatsApp.' },
-  { area: 'performance', title: 'La web carga demasiado lento', status: 'fail', priority: 'alta', impact: 'Más de la mitad de las visitas se van si tarda más de 3 segundos en móvil.', solution: 'Una web moderna optimizada carga en menos de 2s y retiene al visitante.' },
-  { area: 'conversion', title: 'No tiene botón de WhatsApp', status: 'fail', priority: 'alta', impact: 'El cliente quiere escribir pero no encuentra cómo: se pierde la venta.', solution: 'Botón flotante de WhatsApp visible en todo el sitio para captar consultas al instante.' },
-  { area: 'seo', title: 'No está optimizada para SEO', status: 'fail', priority: 'media', impact: 'No aparece en Google cuando buscan su rubro en la zona.', solution: 'SEO local: fichas, metadatos y contenido para rankear en su zona.' },
-  { area: 'conversion', title: 'No tiene formulario de contacto', status: 'warn', priority: 'media', impact: 'Depende de que el cliente llame; muchos prefieren dejar sus datos.', solution: 'Formularios y CTAs claros que capturan leads 24/7.' },
-  { area: 'confianza', title: 'No muestra testimonios ni casos', status: 'warn', priority: 'media', impact: 'Sin prueba social el visitante duda y compara con la competencia.', solution: 'Sección de testimonios y casos de éxito que genera confianza.' },
-  { area: 'web', title: 'Sin HTTPS / candado de seguridad', status: 'fail', priority: 'alta', impact: 'El navegador marca el sitio como "no seguro" y espanta al visitante.', solution: 'Certificado SSL y dominio propio profesional.' },
-  { area: 'web', title: 'No es responsive (móvil)', status: 'fail', priority: 'alta', impact: '8 de cada 10 visitas son desde el celular y se ve mal.', solution: 'Diseño mobile-first perfecto en cualquier pantalla.' },
-  { area: 'seo', title: 'Sin Google Analytics ni Pixel', status: 'warn', priority: 'baja', impact: 'No puede medir visitas ni hacer campañas de remarketing.', solution: 'Instalación de Analytics y Meta Pixel para medir y escalar.' },
-  { area: 'confianza', title: 'No transmite profesionalismo / branding', status: 'warn', priority: 'media', impact: 'Una imagen poco cuidada baja el valor percibido y el precio que puede cobrar.', solution: 'Identidad visual coherente que posiciona al negocio como premium.' },
-  { area: 'social', title: 'Instagram activo sin web que convierta', status: 'warn', priority: 'media', impact: 'Invierte tiempo en redes pero no tiene dónde cerrar la venta.', solution: 'Una web conecta el Instagram con turnos/consultas y catálogo.' },
-]
+function finding(input: Omit<AuditFinding, 'id'>): AuditFinding {
+  return { ...input, id: uid('find') }
+}
 
-/** Selecciona hallazgos relevantes según la presencia digital del lead. */
 function pickFindings(lead: Lead): AuditFinding[] {
-  const p = lead.digitalPresence
-  const chosen: Omit<AuditFinding, 'id'>[] = []
-  const has = (t: string) => chosen.some((c) => c.title === t)
-  const add = (title: string) => {
-    const item = CATALOG.find((c) => c.title === title)
-    if (item && !has(title)) chosen.push(item)
+  const machine = MACHINE_BY_ID[lead.recommendedMachineId]
+  const materials = lead.signals.materials?.join(', ') || lead.recommendedMaterials.slice(0, 3).join(', ')
+  const findings: AuditFinding[] = [
+    finding({
+      area: 'maquina',
+      title: `Recomendar ${lead.recommendedMachineName}`,
+      status: lead.scoreLevel === 'alta' ? 'ok' : 'warn',
+      priority: lead.scoreLevel === 'alta' ? 'alta' : 'media',
+      impact: `${lead.category} suele necesitar ${machine.applications.slice(0, 2).join(' y ')} para reducir tercerizacion, acelerar entregas o agregar servicios.`,
+      solution: `Abrir la conversacion con ${machine.category}, ticket ${machine.ticketRange}, y validar volumen mensual, materiales y espacio disponible.`,
+    }),
+    finding({
+      area: 'materiales',
+      title: 'Materiales compatibles con el catalogo',
+      status: materials ? 'ok' : 'warn',
+      priority: 'alta',
+      impact: `Materiales detectados/inferidos: ${materials}.`,
+      solution: `Mostrar aplicaciones concretas: ${machine.applications.slice(0, 4).join(', ')}.`,
+    }),
+    finding({
+      area: 'produccion',
+      title: 'Necesidad de productividad y repetibilidad',
+      status: lead.industrialMaturity === 'artesanal' ? 'warn' : 'ok',
+      priority: lead.industrialMaturity === 'alta-produccion' ? 'alta' : 'media',
+      impact: `Nivel estimado: ${lead.industrialMaturity}. Una maquina propia puede mejorar tiempos, precision y control de costos.`,
+      solution: 'Preguntar por piezas mensuales, procesos tercerizados, cuellos de botella y plazo promedio de entrega.',
+    }),
+    finding({
+      area: 'financiacion',
+      title: `Ticket probable ${lead.ticketRange}`,
+      status: lead.companySize === 'micro' && lead.potentialValue > 10000000 ? 'warn' : 'ok',
+      priority: 'media',
+      impact: 'La venta debe calificarse como inversion productiva, no como compra impulsiva.',
+      solution: 'Llevar opciones de financiacion, anticipo, ROI por ahorro de tercerizacion y escenarios de recupero.',
+    }),
+    finding({
+      area: 'contacto',
+      title: lead.signals.whatsapp || lead.signals.phone ? 'Canal de contacto disponible' : 'Contacto a validar',
+      status: lead.signals.whatsapp || lead.signals.phone ? 'ok' : 'warn',
+      priority: lead.signals.whatsapp || lead.signals.phone ? 'media' : 'alta',
+      impact: lead.signals.whatsapp || lead.signals.phone
+        ? 'Se puede iniciar calificacion comercial sin investigacion adicional.'
+        : 'Antes de vender conviene identificar duenio, responsable de produccion o compras.',
+      solution: 'Contactar con una pregunta tecnica corta y pedir 10 minutos para validar proceso/materiales.',
+    }),
+  ]
+
+  if (lead.scoreLevel === 'alta') {
+    findings.push(
+      finding({
+        area: 'competencia',
+        title: 'Oportunidad comercial prioritaria',
+        status: 'ok',
+        priority: 'alta',
+        impact: 'El rubro, la escala y el ticket probable justifican seguimiento activo.',
+        solution: 'Asignar vendedor, enviar mensaje personalizado y agendar relevamiento tecnico.',
+      }),
+    )
   }
 
-  if (p === 'sin-web') {
-    add('No tiene sitio web propio')
-    if (lead.signals.hasActiveInstagram) add('Instagram activo sin web que convierta')
-    add('No aparece en Google cuando buscan su rubro en la zona.')
-    add('No está optimizada para SEO')
-    add('No muestra testimonios ni casos')
-  } else {
-    add('La web carga demasiado lento')
-    add('No es responsive (móvil)')
-    if (lead.signals.website && !lead.signals.website.startsWith('https')) add('Sin HTTPS / candado de seguridad')
-    add('No tiene botón de WhatsApp')
-    add('No está optimizada para SEO')
-    add('Sin Google Analytics ni Pixel')
-    add('No transmite profesionalismo / branding')
-    add('No muestra testimonios ni casos')
-  }
-  if (!lead.signals.whatsapp) add('No tiene botón de WhatsApp')
-  return chosen.map((c) => ({ ...c, id: uid('find') }))
+  return findings
 }
 
 function competitorDims(lead: Lead): CompetitorDimension[] {
-  const m = deriveMetrics(lead)
+  const metrics = deriveMetrics(lead)
   return [
-    { dimension: 'Diseño', theirs: m.branding, vigolo: 95 },
-    { dimension: 'Velocidad', theirs: m.performance, vigolo: 96 },
-    { dimension: 'Responsive', theirs: m.mobile, vigolo: 98 },
-    { dimension: 'Conversión', theirs: m.conversion, vigolo: 92 },
-    { dimension: 'SEO', theirs: m.seo, vigolo: 90 },
-    { dimension: 'Branding', theirs: m.branding, vigolo: 94 },
-    { dimension: 'UX', theirs: m.ux, vigolo: 93 },
+    { dimension: 'Encaje maquina', theirs: metrics.machineFit, target: 90 },
+    { dimension: 'Necesidad industrial', theirs: metrics.industrialNeed, target: 88 },
+    { dimension: 'Escala productiva', theirs: metrics.productionScale, target: 86 },
+    { dimension: 'Materiales', theirs: metrics.materialFit, target: 90 },
+    { dimension: 'Presupuesto', theirs: metrics.budgetFit, target: 82 },
+    { dimension: 'Urgencia', theirs: metrics.urgency, target: 84 },
+    { dimension: 'Contacto', theirs: metrics.contactability, target: 80 },
   ]
 }
 
 export function analyzeLead(lead: Lead): AnalysisReport {
   const findings = pickFindings(lead)
-  const metrics = deriveMetrics(lead)
-  const fails = findings.filter((f) => f.status === 'fail').length
+  const machine = MACHINE_BY_ID[lead.recommendedMachineId]
   const summary =
-    lead.digitalPresence === 'sin-web'
-      ? `${lead.name} tiene ${lead.signals.reviewsCount ?? 0} reseñas y ${lead.signals.rating?.toFixed(1) ?? '—'}★ de reputación, pero NO tiene sitio web. Está dejando pasar clientes que la buscan en Google todos los días. Detectamos ${findings.length} oportunidades de mejora (${fails} críticas).`
-      : `${lead.name} tiene presencia web ${lead.digitalPresence.replace('-', ' ')}, pero con problemas que le cuestan clientes. Detectamos ${findings.length} puntos a mejorar (${fails} críticos) que una web moderna resolvería.`
+    `${lead.name} es una oportunidad ${lead.scoreLevel} para ${machine.name}. ` +
+    `La recomendacion surge por el rubro ${lead.category}, materiales como ${lead.recommendedMaterials.slice(0, 3).join(', ')} ` +
+    `y un perfil ${lead.companySize}/${lead.industrialMaturity}. ` +
+    `La maquina resolveria ${machine.applications.slice(0, 3).join(', ')} y el ticket probable es ${lead.ticketRange}. ` +
+    `Primer paso: contactar al responsable de produccion/compras y validar volumen mensual, procesos tercerizados y financiacion.`
 
   return {
     generatedAt: new Date().toISOString(),
     summary,
     findings,
-    metrics,
-    competitor: lead.digitalPresence !== 'sin-web' ? competitorDims(lead) : undefined,
+    metrics: deriveMetrics(lead),
+    competitor: competitorDims(lead),
   }
 }
-
-// ---------------------------------------------------------------------
-// Mensajes comerciales (tono argentino)
-// ---------------------------------------------------------------------
 
 const AGENCY = APP.agency.name
 const SIGN = APP.agency.signature
 
 const CHANNELS: { channel: MessageChannel; label: string }[] = [
   { channel: 'whatsapp', label: 'WhatsApp' },
-  { channel: 'instagram', label: 'Instagram DM' },
   { channel: 'email', label: 'Email' },
   { channel: 'linkedin', label: 'LinkedIn' },
+  { channel: 'instagram', label: 'Instagram DM' },
   { channel: 'seguimiento-1', label: 'Seguimiento 1' },
   { channel: 'seguimiento-2', label: 'Seguimiento 2' },
   { channel: 'seguimiento-3', label: 'Seguimiento 3' },
-  { channel: 'obj-precio', label: 'Objeción: precio' },
-  { channel: 'obj-pensarlo', label: 'Objeción: "lo pienso"' },
-  { channel: 'obj-ya-tengo-web', label: 'Objeción: "ya tengo web"' },
+  { channel: 'obj-precio', label: 'Objecion: precio' },
+  { channel: 'obj-pensarlo', label: 'Objecion: lo pensamos' },
+  { channel: 'obj-ya-tengo-maquina', label: 'Objecion: ya tengo maquina' },
   { channel: 'obj-no-responde', label: 'No responde' },
-  { channel: 'quiere-reunion', label: 'Quiere reunión' },
+  { channel: 'quiere-reunion', label: 'Quiere reunion' },
 ]
 
 export const MESSAGE_CHANNELS = CHANNELS
 
-function hook(lead: Lead): string {
-  switch (lead.digitalPresence) {
-    case 'sin-web':
-      return `vi que ${lead.name} tiene muy buena presencia en la zona pero todavía no tiene una página web propia`
-    case 'web-vieja':
-      return `estuve mirando la web de ${lead.name} y creo que con un rediseño le sacarían mucho más provecho`
-    case 'web-aceptable':
-      return `vi la web de ${lead.name}, está buena, y con unos ajustes podría generar bastantes más consultas`
-    default:
-      return `me gustó cómo se maneja ${lead.name} y creo que hay margen para potenciar su web y captar más clientes`
-  }
+function contactName() {
+  return SIGN.split(' - ')[0] || AGENCY
 }
 
-function cap(s: string) {
-  return s.charAt(0).toUpperCase() + s.slice(1)
+function machineHook(lead: Lead): string {
+  const apps = lead.recommendedApplications.slice(0, 2).join(' y ')
+  return `por el tipo de trabajo de ${lead.category.toLowerCase()}, probablemente podrian mejorar ${apps} con ${lead.recommendedMachineName}`
 }
 
 export function messageFor(lead: Lead, channel: MessageChannel): string {
+  const machine = MACHINE_BY_ID[lead.recommendedMachineId]
   const n = lead.name
   switch (channel) {
     case 'whatsapp':
-      return `¡Hola! ¿Cómo va? Te escribo de ${AGENCY}. ${cap(hook(lead))}. Hago páginas web profesionales para negocios que quieren recibir más consultas por WhatsApp. ¿Te muestro un par de ejemplos? Sin compromiso 😊`
-    case 'instagram':
-      return `¡Hola! ¿Cómo andan? 👋 ${cap(hook(lead))}. Tengo una agencia (${AGENCY}) especializada en webs para negocios como ${n}. Si quieren les paso ideas concretas, sin vueltas.`
+      return `Hola, buen dia. Soy ${contactName()}, de ${AGENCY}. Vi ${n} y ${machineHook(lead)}. No quiero mandarte un catalogo generico: queria preguntarte si hoy cortan/graban internamente o tercerizan parte del proceso. Si te sirve, te paso una recomendacion tecnica concreta.`
     case 'email':
-      return `Asunto: Una web que le traiga más consultas a ${n}\n\nHola, ¿cómo está?\n\nSoy ${SIGN.split(' — ')[0]}, de ${AGENCY}. ${cap(hook(lead))}.\n\nMe especializo en páginas rápidas y pensadas para que el cliente termine escribiendo por WhatsApp o dejando sus datos. Si le interesa, le preparo una propuesta a medida para ${n}, sin compromiso.\n\nSaludos,\n${SIGN}`
+      return `Asunto: Consulta tecnica para ${n}\n\nHola, buen dia.\n\nSoy ${contactName()}, de ${AGENCY}. Estuve revisando empresas del rubro ${lead.category} y ${machineHook(lead)}.\n\nLa maquina que mejor encaja como punto de partida es ${machine.name} (${machine.ticketRange}). Puede ayudar en ${machine.applications.slice(0, 3).join(', ')} y trabaja materiales como ${machine.materials.slice(0, 4).join(', ')}.\n\nAntes de enviar informacion, prefiero validar dos datos: que materiales trabajan y si hoy tercerizan algun proceso de corte/grabado.\n\nSaludos,\n${SIGN}`
     case 'linkedin':
-      return `Hola, ¿cómo estás? Vi el perfil de ${n} y me pareció que hay una oportunidad clara de mejorar su presencia digital. En ${AGENCY} ayudamos a negocios del rubro a convertir más con una web profesional. ¿Te interesa que te comparta un análisis rápido?`
+      return `Hola, como estas? Soy ${contactName()}, de ${AGENCY}. Estoy contactando empresas industriales argentinas donde una ${machine.category} puede resolver tercerizacion, tiempos de entrega o trazabilidad. Por el perfil de ${n}, creo que ${machine.name} podria tener sentido. Te puedo compartir una recomendacion breve?`
+    case 'instagram':
+      return `Hola, como va? Soy ${contactName()} de ${AGENCY}. Vi el trabajo de ${n}; por materiales y rubro, ${lead.recommendedMachineName} podria sumarles capacidad de ${machine.applications.slice(0, 2).join(' y ')}. Si queres, te paso una guia corta para evaluar si conviene comprar o seguir tercerizando.`
     case 'seguimiento-1':
-      return `¡Hola! ¿Cómo va? Te había escrito por lo de la web para ${n}. No te quiero hinchar 🙌, solo saber si te interesa que te muestre algo concreto. ¿Lo vemos?`
+      return `Hola, retomo mi mensaje anterior por ${lead.recommendedMachineName}. Te queria dejar una pregunta simple: hoy ese proceso lo hacen adentro o lo mandan a terceros? Con eso te digo si tiene sentido avanzar o no.`
     case 'seguimiento-2':
-      return `¡Hola de nuevo! Te dejo un dato: la mayoría de tus clientes te buscan primero en Google desde el celular. Con una web simple podés captar esas consultas. ¿Te preparo una propuesta corta para ${n}?`
+      return `Buen dia. Para ${lead.category}, el punto clave suele ser calcular horas de maquina, costo tercerizado y recupero. Si me pasas material y volumen estimado, te preparo una recomendacion rapida de equipo 2GTech3D.`
     case 'seguimiento-3':
-      return `¡Hola! Última que te escribo para no molestar 🙂. Si en algún momento querés potenciar ${n} con una web que traiga consultas, quedo a disposición. ¡Éxitos!`
+      return `Ultimo mensaje para no insistir. Si mas adelante estan evaluando corte, grabado o marcado industrial, quedo a disposicion para comparar opciones de 2GTech3D y estimar ROI.`
     case 'obj-precio':
-      return `Entiendo perfecto. Lo pensás como inversión: una sola venta nueva por mes ya paga la web. Tengo planes desde opciones accesibles y financiación. ¿Te muestro qué incluye cada uno para ${n}?`
+      return `Es una inversion importante, totalmente. Por eso no conviene mirarla solo por precio: hay que comparar tercerizacion, desperdicio, tiempos de entrega y nuevos trabajos que podrian tomar. Podemos armar un escenario simple con ${lead.ticketRange} para ver si cierra.`
     case 'obj-pensarlo':
-      return `¡Dale, tomate tu tiempo! Te dejo un mini análisis de ${n} así lo ves con datos. Cualquier duda me escribís. ¿Te parece si te reescribo la semana que viene?`
-    case 'obj-ya-tengo-web':
-      return `¡Buenísimo que ya tengan web! Justamente por eso te escribo: hice un análisis y detecté algunos puntos (velocidad, móvil, WhatsApp, SEO) que se pueden mejorar para que traiga más consultas. ¿Te lo comparto sin cargo?`
+      return `Perfecto. Para que lo piensen con datos, les propongo validar tres cosas: materiales, volumen mensual y proceso que mas tercerizan. Con eso se ve rapido si ${lead.recommendedMachineName} tiene sentido ahora o si conviene esperar.`
+    case 'obj-ya-tengo-maquina':
+      return `Buenisimo que ya tengan maquina. En ese caso la conversacion cambia: vemos si necesitan mas potencia, mejor mesa, marcado complementario, respaldo tecnico o reducir cuello de botella. ${lead.recommendedMachineName} podria complementar lo que ya usan, no reemplazarlo a ciegas.`
     case 'obj-no-responde':
-      return `¡Hola! Se me debe haber pasado tu respuesta 🙈. Si el momento no es el ideal, no hay drama. Solo decime "ahora no" y te reescribo más adelante. ¡Abrazo!`
+      return `Hola, dejo la consulta abierta para cuando sea oportuno. Si no son la persona indicada para equipos CNC/laser, me sirve que me orienten con produccion o compras. Gracias.`
     case 'quiere-reunion':
-      return `¡Genial! Me encanta. Tengo disponibilidad esta semana. ¿Te queda cómodo una llamada de 15 min? Pasame dos horarios que te sirvan y lo agendamos para ver la propuesta de ${n} 🙌`
+      return `Perfecto. Hagamos una llamada de 15 minutos para revisar materiales, medidas, volumen mensual, espacio y energia disponible. Con eso definimos si ${lead.recommendedMachineName} es la opcion correcta o si conviene otra maquina del catalogo.`
   }
 }
 
@@ -193,58 +226,72 @@ export function allMessages(lead: Lead): GeneratedMessage[] {
   }))
 }
 
-// ---------------------------------------------------------------------
-// Asesor IA estratégico (razonamiento local sobre el dataset)
-// ---------------------------------------------------------------------
-
 export interface AdvisorContext {
   leads: Lead[]
+}
+
+function bestBy(leads: Lead[], key: keyof Pick<Lead, 'province' | 'city' | 'category' | 'recommendedMachineName'>) {
+  const map = new Map<string, { sum: number; value: number; n: number }>()
+  for (const l of leads) {
+    const k = String(l[key])
+    const cur = map.get(k) ?? { sum: 0, value: 0, n: 0 }
+    cur.sum += l.score
+    cur.value += l.potentialValue
+    cur.n += 1
+    map.set(k, cur)
+  }
+  return [...map.entries()]
+    .map(([k, v]) => ({ k, avg: v.sum / v.n, value: v.value, n: v.n }))
+    .sort((a, b) => b.avg - a.avg)
 }
 
 export function advisorAnswer(question: string, ctx: AdvisorContext): string {
   const q = question.toLowerCase()
   const leads = ctx.leads
-  if (leads.length === 0) return 'Todavía no hay leads cargados. Hacé un sondeo en Prospección para que pueda analizarlos.'
+  if (leads.length === 0) return 'Todavia no hay leads cargados. Ejecuta una busqueda industrial en Prospeccion o Radar IA.'
 
   const byScore = [...leads].sort((a, b) => b.score - a.score)
-
-  const topN = (n: number) =>
-    byScore
-      .slice(0, n)
-      .map((l, i) => `${i + 1}. ${l.name} (${l.zone}) — score ${l.score}, ${l.scoreHeadline}`)
-      .join('\n')
-
-  const bestBy = (key: 'zone' | 'category') => {
-    const map = new Map<string, { sum: number; n: number }>()
-    for (const l of leads) {
-      const k = l[key]
-      const cur = map.get(k) ?? { sum: 0, n: 0 }
-      cur.sum += l.score
-      cur.n += 1
-      map.set(k, cur)
-    }
-    return [...map.entries()]
-      .map(([k, v]) => ({ k, avg: v.sum / v.n, n: v.n }))
-      .sort((a, b) => b.avg - a.avg)
-  }
+  const top = byScore
+    .slice(0, 5)
+    .map((l, i) => `${i + 1}. ${l.name} - ${l.recommendedMachineName} - score ${l.score} - ${l.ticketRange}`)
+    .join('\n')
 
   if (q.includes('primero') || q.includes('contactar') || q.includes('prioridad') || q.includes('probabilidad')) {
-    return `Te ordeno los que conviene contactar primero por score de oportunidad:\n\n${topN(5)}\n\nEmpezá por el #1: mayor probabilidad de cerrar con menos esfuerzo.`
+    return `Contactaria primero estos leads:\n\n${top}\n\nMotivo: combinan rubro objetivo, escala industrial, maquina clara y ticket justificable.`
   }
-  if (q.includes('ciudad') || q.includes('zona') || q.includes('barrio')) {
-    const z = bestBy('zone')
-    return `Mejores zonas por oportunidad promedio:\n\n${z.slice(0, 5).map((x, i) => `${i + 1}. ${x.k} — score prom. ${x.avg.toFixed(0)} (${x.n} leads)`).join('\n')}\n\nSugerencia: concentrá el sondeo en ${z[0]?.k}.`
+
+  if (q.includes('maquina') || q.includes('equipo') || q.includes('catalogo')) {
+    const rows = bestBy(leads, 'recommendedMachineName')
+      .slice(0, 5)
+      .map((x, i) => `${i + 1}. ${x.k} - score prom. ${x.avg.toFixed(0)} - ${x.n} oportunidades`)
+      .join('\n')
+    return `Maquinas mas prometedoras en el radar:\n\n${rows}\n\nUsa esto para priorizar stock, demos tecnicas y mensajes por rubro.`
   }
-  if (q.includes('rubro') || q.includes('categoria') || q.includes('categoría')) {
-    const c = bestBy('category')
-    return `Mejores rubros por oportunidad promedio:\n\n${c.slice(0, 5).map((x, i) => `${i + 1}. ${x.k} — score prom. ${x.avg.toFixed(0)} (${x.n} leads)`).join('\n')}\n\nEl rubro ${c[0]?.k} está rindiendo mejor.`
+
+  if (q.includes('provincia') || q.includes('ciudad') || q.includes('zona')) {
+    const rows = bestBy(leads, q.includes('provincia') ? 'province' : 'city')
+      .slice(0, 5)
+      .map((x, i) => `${i + 1}. ${x.k} - score prom. ${x.avg.toFixed(0)} - potencial ${x.value.toLocaleString('es-AR')} ARS`)
+      .join('\n')
+    return `Zonas con mejor oportunidad:\n\n${rows}\n\nConviene combinar visitas tecnicas con llamadas de calificacion.`
   }
-  if (q.includes('precio') || q.includes('cobrar') || q.includes('presupuesto')) {
+
+  if (q.includes('rubro') || q.includes('industria') || q.includes('categoria')) {
+    const rows = bestBy(leads, 'category')
+      .slice(0, 5)
+      .map((x, i) => `${i + 1}. ${x.k} - score prom. ${x.avg.toFixed(0)} - ${x.n} leads`)
+      .join('\n')
+    return `Rubros con mejor encaje:\n\n${rows}\n\nEl mensaje debe hablar de proceso productivo, no de publicidad.`
+  }
+
+  if (q.includes('precio') || q.includes('ticket') || q.includes('valor') || q.includes('presupuesto')) {
     const avg = Math.round(leads.reduce((s, l) => s + l.potentialValue, 0) / leads.length)
-    return `Para este perfil de negocios, un ticket saludable ronda ${avg.toLocaleString('es-AR')} (valor potencial promedio estimado). Recomendación: presentá 3 planes (básico / profesional / premium) y anclá en el del medio. Para negocios sin web y con muchas reseñas podés ir a la banda alta: tienen demanda y les falta el canal.`
+    return `Ticket potencial promedio: ${avg.toLocaleString('es-AR')} ARS. Presentaria la propuesta como inversion productiva: ahorro de tercerizacion, mas velocidad, menos scrap y nuevos trabajos que hoy no pueden tomar.`
   }
-  if (q.includes('objecion') || q.includes('objeción') || q.includes('responder') || q.includes('vender')) {
-    return `Guion rápido para vender una web:\n1) Mostrale el problema con datos (su análisis en la pestaña Auditoría).\n2) Traducí el problema a plata perdida ("clientes que te buscan y no te encuentran").\n3) Presentá la solución como inversión con retorno (una venta nueva paga la web).\n4) Cerrá con una acción chica: "¿te mando la propuesta?".\nPara objeciones puntuales tenés respuestas listas en la pestaña Mensajes (precio, "lo pienso", "ya tengo web", etc.).`
+
+  if (q.includes('vender') || q.includes('objecion') || q.includes('respuesta')) {
+    return `Guion recomendado:\n1. Abrir con una pregunta tecnica: material, espesor/medida y volumen mensual.\n2. Conectar el problema con la maquina recomendada, no con una lista generica de productos.\n3. Traducir la inversion a ROI: tercerizacion, demora, desperdicio y nuevos servicios.\n4. Cerrar con relevamiento: energia, espacio, aire/ventilacion, operador y financiacion.\nLas respuestas por WhatsApp, Email, LinkedIn e Instagram ya estan en la pestana Mensajes.`
   }
-  return `Puedo ayudarte a priorizar. Probá preguntarme:\n• ¿Qué negocio conviene contactar primero?\n• ¿Qué zona / rubro tiene mejores oportunidades?\n• ¿Qué precio recomendarías?\n• ¿Cómo le vendería una web / cómo respondo objeciones?\n\nMientras tanto, tu lead más caliente es: ${byScore[0].name} (${byScore[0].zone}), score ${byScore[0].score}.`
+
+  return `Tu mejor oportunidad ahora es ${byScore[0].name}: ${byScore[0].recommendedMachineName}, score ${byScore[0].score}, ticket ${byScore[0].ticketRange}. Puedo ayudarte a priorizar por maquina, rubro, provincia, ciudad, ticket o guion de venta.`
 }

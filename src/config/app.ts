@@ -5,12 +5,12 @@
 const env = import.meta.env
 
 export const APP = {
-  name: 'Vigolo Lead Radar',
-  shortName: 'Lead Radar',
-  tagline: 'Prospección comercial impulsada por IA',
+  name: '2GTech3D Lead Radar',
+  shortName: '2G Radar',
+  tagline: 'Radar comercial para detectar compradores de maquinas CNC y laser',
   agency: {
-    name: env.VITE_AGENCY_NAME ?? 'Vigolo Web Studio',
-    signature: env.VITE_AGENCY_SIGNATURE ?? 'Santiago — Vigolo Web Studio',
+    name: env.VITE_AGENCY_NAME ?? '2GTech3D',
+    signature: env.VITE_AGENCY_SIGNATURE ?? 'Equipo comercial - 2GTech3D',
   },
 } as const
 
@@ -23,15 +23,15 @@ export const APP = {
 export const PROVIDERS = {
   data: (env.VITE_DATA_PROVIDER ?? 'mock') as 'mock' | 'google',
   ai: (env.VITE_AI_PROVIDER ?? 'mock') as 'mock' | 'openai',
-  /** Base URL del backend/proxy (ej: https://api.vigolo.dev). */
+  /** Base URL del backend/proxy (ej: https://api.2gtech3d.com). */
   apiBaseUrl: env.VITE_API_BASE_URL ?? '',
 } as const
 
 /** Moneda para valores potenciales/reales del CRM. */
 export const CURRENCY = {
-  code: env.VITE_CURRENCY ?? 'USD',
+  code: env.VITE_CURRENCY ?? 'ARS',
   locale: 'es-AR',
 } as const
 
-/** Ticket promedio sugerido por rubro (para estimar valor potencial). */
-export const DEFAULT_TICKET = Number(env.VITE_DEFAULT_TICKET ?? 800)
+/** Ticket promedio industrial si una maquina no trae precio especifico. */
+export const DEFAULT_TICKET = Number(env.VITE_DEFAULT_TICKET ?? 12000000)

@@ -29,7 +29,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   })
-  if (!res.ok) throw new Error(`IA backend respondió ${res.status}`)
+  if (!res.ok) throw new Error(`IA backend respondio ${res.status}`)
   return res.json() as Promise<T>
 }
 
@@ -41,11 +41,11 @@ function isValidReport(r: unknown): r is AnalysisReport {
       typeof rep.summary === 'string' &&
       Array.isArray(rep.findings) &&
       rep.metrics &&
-      typeof rep.metrics.performance === 'number',
+      typeof rep.metrics.machineFit === 'number',
   )
 }
 
-/** Analiza un negocio y devuelve el informe (web, GBP, redes). */
+/** Analiza una empresa y devuelve el informe industrial. */
 export async function aiAnalyze(lead: Lead): Promise<AnalysisReport> {
   await new Promise((r) => setTimeout(r, 500)) // UX "pensando..."
   if (useOpenAI) {

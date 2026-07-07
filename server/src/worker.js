@@ -1,22 +1,13 @@
-// =====================================================================
-// Vigolo Lead Radar — Backend / Proxy (Cloudflare Worker)
-// ---------------------------------------------------------------------
-// Protege las API keys (Google Places + OpenAI) del lado del servidor y
-// resuelve CORS. El frontend (VITE_API_BASE_URL) llama estos endpoints:
-//   POST /places/search   → Google Places (New) Text Search + mapeo
-//   POST /ai/analyze      → OpenAI: diagnóstico del negocio
-//   POST /ai/message      → OpenAI: 1 mensaje
-//   POST /ai/messages     → OpenAI: set de mensajes
-//   POST /ai/advisor      → OpenAI: asesor comercial
-//   GET  /health          → estado
-//
-// Secrets (wrangler secret put ...):
-//   GOOGLE_PLACES_API_KEY, OPENAI_API_KEY
-// Vars (wrangler.toml):
-//   OPENAI_MODEL (default gpt-4o-mini), ALLOWED_ORIGIN (CORS)
-// =====================================================================
+// 2GTech3D Lead Radar - Backend / Proxy (Cloudflare Worker)
+// Protege keys de Google Places + OpenAI y expone endpoints para el frontend.
 
-const HIGH_INTENT = ['barberia','peluqueria','gimnasio','estetica','spa','restaurante','cafeteria','bar','inmobiliaria','electricista','plomero','ferreteria','odontologia','consultorio','abogado','contador','veterinaria','turismo','hotel','indumentaria']
+const HIGH_INTENT = [
+  'metalurgica','metalmecanica','carpinteria','muebleria','carteleria',
+  'constructora','fabrica','autopartista','matriceria','diseno industrial',
+  'escuela tecnica','universidad tecnica','taller industrial','corte laser',
+  'grabado laser','acero inoxidable','aluminio','muebles','cocinas','aberturas',
+  'estructuras',
+]
 
 function corsHeaders(env) {
   return {
@@ -37,9 +28,7 @@ function json(data, env, status = 200) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url)
-    if (request.method === 'OPTIONS') {
-      return new Response(null, { headers: corsHeaders(env) })
-    }
+    if (request.method === 'OPTIONS') return new Response(null, { headers: corsHeaders(env) })
     try {
       if (url.pathname === '/health') {
         return json({
@@ -64,14 +53,11 @@ export default {
   },
 }
 
-// --------------------------------------------------------------------
-// Google Places (New) — Text Search
-// https://developers.google.com/maps/documentation/places/web-service/text-search
-// --------------------------------------------------------------------
 async function placesSearch(params, env) {
   if (!env.GOOGLE_PLACES_API_KEY) throw new Error('Falta GOOGLE_PLACES_API_KEY en el backend.')
   const loc = [params.city, params.province, 'Argentina'].filter(Boolean).join(', ')
-  const textQuery = `${params.category || 'negocios'} en ${params.query || loc}`
+  const fallback = 'empresa industrial metalurgica carpinteria carteleria autopartista matriceria corte laser grabado laser'
+  const textQuery = `${params.category || fallback} en ${params.query || loc}`
 
   const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
     method: 'POST',
@@ -112,8 +98,8 @@ async function placesSearch(params, env) {
 }
 
 function mapPlace(p, params) {
-  const name = p.displayName?.text || 'Negocio'
-  const category = p.primaryTypeDisplayName?.text || params.category || 'Negocio'
+  const name = p.displayName?.text || 'Empresa industrial'
+  const category = params.category || p.primaryTypeDisplayName?.text || 'Empresa industrial'
   const website = p.websiteUri || undefined
   return {
     name,
@@ -129,7 +115,6 @@ function mapPlace(p, params) {
     source: 'google',
     signals: {
       website,
-      // Heurística de calidad; una auditoría real (Lighthouse) puede refinarla.
       websiteQuality: website ? (website.startsWith('https') ? 'aceptable' : 'vieja') : undefined,
       phone: p.internationalPhoneNumber || p.nationalPhoneNumber || undefined,
       whatsapp: undefined,
@@ -140,9 +125,6 @@ function mapPlace(p, params) {
   }
 }
 
-// --------------------------------------------------------------------
-// OpenAI helpers
-// --------------------------------------------------------------------
 async function openai(env, messages, jsonMode = false) {
   if (!env.OPENAI_API_KEY) throw new Error('Falta OPENAI_API_KEY en el backend.')
   const res = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -163,13 +145,13 @@ async function openai(env, messages, jsonMode = false) {
   return data.choices?.[0]?.message?.content || ''
 }
 
-const SYS = 'Sos un vendedor argentino experto de una agencia de desarrollo web (Vigolo Web Studio). Escribís mensajes humanos, cercanos, profesionales y persuasivos, sin sonar spam. Nunca inventás datos ni prometés precios.'
+const SYS = 'Sos un vendedor argentino experto en venta consultiva B2B de maquinas CNC, laser fibra, laser CO2 y grabadoras laser para 2GTech3D. Escribis mensajes humanos, profesionales y concretos. No inventas datos ni prometes precios cerrados sin validar materiales, volumen, energia, espacio y financiacion.'
 
 async function aiMessage(body, env) {
   const { lead, channel } = body
   const text = await openai(env, [
     { role: 'system', content: SYS },
-    { role: 'user', content: `Escribí un mensaje de prospección para el canal "${channel}" dirigido a este negocio:\n${JSON.stringify(businessBrief(lead))}\nDevolvé solo el texto del mensaje.` },
+    { role: 'user', content: `Escribi un mensaje de prospeccion para el canal "${channel}" dirigido a esta empresa industrial:\n${JSON.stringify(businessBrief(lead))}\nDebe recomendar la maquina, explicar por que, que problema resuelve y proponer un primer paso. Devolve solo el texto.` },
   ])
   return { text: text.trim() }
 }
@@ -180,10 +162,12 @@ async function aiMessages(body, env) {
     ['whatsapp','WhatsApp'],['instagram','Instagram DM'],['email','Email'],
     ['linkedin','LinkedIn'],['seguimiento-1','Seguimiento 1'],
     ['seguimiento-2','Seguimiento 2'],['seguimiento-3','Seguimiento 3'],
+    ['obj-precio','Objecion precio'],['obj-pensarlo','Objecion lo pensamos'],
+    ['obj-ya-tengo-maquina','Objecion ya tengo maquina'],
   ]
   const content = await openai(env, [
     { role: 'system', content: SYS },
-    { role: 'user', content: `Generá mensajes de prospección para el negocio:\n${JSON.stringify(businessBrief(lead))}\nDevolvé un JSON: {"messages":[{"channel":"whatsapp","label":"WhatsApp","text":"..."}, ...]} para estos canales: ${channels.map((c) => c[0]).join(', ')}.` },
+    { role: 'user', content: `Genera mensajes de prospeccion para esta empresa industrial:\n${JSON.stringify(businessBrief(lead))}\nDevolve JSON: {"messages":[{"channel":"whatsapp","label":"WhatsApp","text":"..."}, ...]} para estos canales: ${channels.map((c) => c[0]).join(', ')}. Inclui recomendacion de maquina y pregunta tecnica de calificacion.` },
   ], true)
   try {
     const parsed = JSON.parse(content)
@@ -196,8 +180,8 @@ async function aiAdvisor(body, env) {
   const { question, leads } = body
   const top = (leads || []).slice().sort((a, b) => b.score - a.score).slice(0, 25).map(businessBrief)
   const answer = await openai(env, [
-    { role: 'system', content: SYS + ' Actuás como consultor comercial. Respondés claro y accionable, en español rioplatense.' },
-    { role: 'user', content: `Datos de leads (top por score):\n${JSON.stringify(top)}\n\nPregunta: ${question}` },
+    { role: 'system', content: SYS + ' Actuas como consultor comercial. Respondes claro y accionable, en espanol rioplatense.' },
+    { role: 'user', content: `Datos de oportunidades (top por score):\n${JSON.stringify(top)}\n\nPregunta: ${question}` },
   ])
   return { answer: answer.trim() }
 }
@@ -206,17 +190,17 @@ async function aiAnalyze(body, env) {
   const { lead } = body
   const metrics = deriveMetrics(lead)
   const content = await openai(env, [
-    { role: 'system', content: 'Sos un auditor de presencia digital. Analizás negocios para una agencia web. Respondés en español, en JSON válido.' },
-    { role: 'user', content: `Analizá este negocio y devolvé JSON con: {"summary": "...", "findings": [{"area":"web|seo|performance|social|confianza|conversion","title":"...","status":"ok|warn|fail","priority":"alta|media|baja","impact":"...","solution":"..."}]}\nNegocio:\n${JSON.stringify(businessBrief(lead))}` },
+    { role: 'system', content: 'Sos un analista comercial industrial para 2GTech3D. Respondes en espanol y JSON valido.' },
+    { role: 'user', content: `Analiza esta oportunidad y devolve JSON con: {"summary": "...", "findings": [{"area":"maquina|produccion|materiales|financiacion|contacto|ubicacion|competencia","title":"...","status":"ok|warn|fail","priority":"alta|media|baja","impact":"...","solution":"..."}]}\nEmpresa:\n${JSON.stringify(businessBrief(lead))}` },
   ], true)
   let parsed = {}
   try { parsed = JSON.parse(content) } catch { /* noop */ }
   return {
     generatedAt: new Date().toISOString(),
-    summary: parsed.summary || `${lead.name}: análisis de presencia digital.`,
+    summary: parsed.summary || `${lead.name}: analisis de oportunidad industrial para ${lead.recommendedMachineName}.`,
     findings: (Array.isArray(parsed.findings) ? parsed.findings : []).map((f, i) => ({
       id: `f${i}`,
-      area: f.area || 'web',
+      area: f.area || 'maquina',
       title: f.title || 'Hallazgo',
       status: f.status || 'warn',
       priority: f.priority || 'media',
@@ -229,23 +213,41 @@ async function aiAnalyze(body, env) {
 
 function businessBrief(lead) {
   return {
-    name: lead.name, category: lead.category, province: lead.province, city: lead.city,
-    website: lead.signals?.website || 'no tiene', instagram: lead.signals?.instagram || 'no',
-    reviews: lead.signals?.reviewsCount ?? 0, rating: lead.signals?.rating ?? 0,
-    presencia: lead.digitalPresence, score: lead.score,
+    name: lead.name,
+    category: lead.category,
+    industry: lead.industry,
+    province: lead.province,
+    city: lead.city,
+    recommendedMachine: lead.recommendedMachineName,
+    machineCategory: lead.recommendedMachineCategory,
+    ticketRange: lead.ticketRange,
+    companySize: lead.companySize,
+    industrialMaturity: lead.industrialMaturity,
+    materials: lead.recommendedMaterials,
+    applications: lead.recommendedApplications,
+    website: lead.signals?.website || 'no tiene',
+    instagram: lead.signals?.instagram || 'no',
+    reviews: lead.signals?.reviewsCount ?? 0,
+    rating: lead.signals?.rating ?? 0,
+    presencia: lead.digitalPresence,
+    score: lead.score,
+    potentialValue: lead.potentialValue,
   }
 }
 
 function deriveMetrics(lead) {
-  const p = lead.digitalPresence
-  const base = p === 'sin-web' ? 8 : p === 'web-vieja' ? 32 : p === 'web-aceptable' ? 58 : 82
   const clamp = (n) => Math.max(3, Math.min(98, Math.round(n)))
+  const maturity = { artesanal: 35, 'semi-industrial': 62, industrial: 82, 'alta-produccion': 92 }[lead.industrialMaturity] || 60
+  const size = { micro: 38, pyme: 62, industrial: 82, 'gran-industria': 92 }[lead.companySize] || 60
   return {
-    performance: clamp(base), seo: clamp(base - 6), ux: clamp(base + 2),
-    branding: clamp(base - 4), conversion: clamp(base - 10),
-    mobile: clamp(base - 4), trust: clamp(base + (lead.signals?.rating || 0) * 3),
+    machineFit: clamp(lead.score + 8),
+    industrialNeed: clamp(maturity),
+    productionScale: clamp(size),
+    materialFit: clamp((lead.recommendedMaterials?.length || 0) ? 82 : 55),
+    budgetFit: clamp(size + (lead.potentialValue > 30000000 ? -4 : 6)),
+    urgency: clamp(lead.score),
+    contactability: clamp(lead.signals?.whatsapp || lead.signals?.phone ? 82 : 42),
   }
 }
 
-// eslint utilizado por HIGH_INTENT (reservado para scoring server-side futuro)
 export { HIGH_INTENT }

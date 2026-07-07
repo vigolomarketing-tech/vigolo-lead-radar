@@ -5,10 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vitejs.dev/config/
 //
 // base:
-//  - GitHub Pages sirve el sitio en una subruta (/vigolo-lead-radar/), por eso
+//  - GitHub Pages puede servir el sitio en una subruta, por eso
 //    el build de Pages usa ese base. El workflow lo setea con VITE_BASE.
 //  - En Vercel / dominio raiz, base = '/' (default).
-//  Nota: el base absoluto ('/vigolo-lead-radar/') es mas robusto que './' en
+//  Nota: el base absoluto configurado por VITE_BASE es mas robusto que './' en
 //  GitHub Pages (evita problemas de rutas y de subpaths).
 export default defineConfig({
   base: process.env.VITE_BASE || '/',
@@ -18,9 +18,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['radar.svg', 'icons/apple-touch-icon.png', 'icons/apple-splash-1170-2532.png', 'icons/apple-splash-1284-2778.png'],
       manifest: {
-        name: 'Vigolo Lead Radar',
-        short_name: 'Lead Radar',
-        description: 'Prospección comercial impulsada por IA para Vigolo Web Studio.',
+        name: '2GTech3D Lead Radar',
+        short_name: '2G Radar',
+        description: 'Prospeccion comercial industrial para detectar compradores de maquinas CNC y laser 2GTech3D.',
         lang: 'es-AR',
         theme_color: '#3EA6FF',
         background_color: '#050816',

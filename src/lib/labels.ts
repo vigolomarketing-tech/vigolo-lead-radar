@@ -5,10 +5,10 @@ import type {
 } from '../types'
 
 export const DIGITAL_PRESENCE_LABEL: Record<DigitalPresence, string> = {
-  'sin-web': 'Sin web',
-  'web-vieja': 'Web vieja',
-  'web-aceptable': 'Web aceptable',
-  'buen-potencial': 'Buena presencia',
+  'sin-web': 'Sin trazabilidad digital',
+  'web-vieja': 'Presencia basica',
+  'web-aceptable': 'Presencia validada',
+  'buen-potencial': 'Buena trazabilidad',
 }
 
 export const OPPORTUNITY_LABEL: Record<OpportunityLevel, string> = {
@@ -39,10 +39,10 @@ export const DIGITAL_PRESENCE_STYLE: Record<DigitalPresence, string> = {
 export const CRM_STAGE_LABEL: Record<CrmStage, string> = {
   nuevo: 'Nuevo',
   contactado: 'Contactado',
-  respondio: 'Respondió',
+  respondio: 'Respondio',
   interesado: 'Interesado',
-  reunion: 'Reunión',
-  propuesta: 'Propuesta',
+  reunion: 'Relevamiento',
+  propuesta: 'Cotizacion',
   ganado: 'Ganado',
   perdido: 'Perdido',
 }

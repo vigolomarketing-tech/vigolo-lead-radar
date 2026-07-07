@@ -40,9 +40,9 @@ export function suggestFollowUps(leads: Lead[], limit = 8): FollowUpSuggestion[]
 
     let reason = ''
     if (overdue) reason = `Seguimiento programado para hoy o vencido.`
-    else if (lead.stage === 'nuevo' && lead.score >= 70)
-      reason = `Lead nuevo caliente (score ${lead.score}) sin contactar.`
-    else if (stale) reason = `Sin contacto hace ${since} días en estado "${lead.stage}".`
+    else if (lead.stage === 'nuevo' && lead.score >= 72)
+      reason = `${lead.recommendedMachineName}: oportunidad alta sin contactar (score ${lead.score}).`
+    else if (stale) reason = `Sin contacto hace ${since} dias en estado "${lead.stage}".`
     else continue
 
     const channel = STAGE_CHANNEL[lead.stage] ?? 'whatsapp'

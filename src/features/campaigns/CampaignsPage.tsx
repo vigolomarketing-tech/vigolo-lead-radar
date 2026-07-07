@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { Button, Card, EmptyState, Field, Input, Select } from '../../components/ui/primitives'
-import { useLeadStore } from '../../store/useLeadStore'
-import { PROVINCES, citiesOfProvince, CATEGORIES } from '../../config/argentina'
+import { CATEGORIES, PROVINCES, citiesOfProvince } from '../../config/argentina'
+import { MACHINES } from '../../config/machines'
 import { formatCurrency, formatDate } from '../../lib/format'
+import { useLeadStore } from '../../store/useLeadStore'
 import type { Campaign, Lead } from '../../types'
 
 function campaignLeads(c: Campaign, leads: Lead[]): Lead[] {
@@ -12,7 +13,8 @@ function campaignLeads(c: Campaign, leads: Lead[]): Lead[] {
     (l) =>
       (!c.province || l.province === c.province) &&
       (!c.city || l.city === c.city) &&
-      (!c.category || l.category === c.category),
+      (!c.category || l.category === c.category) &&
+      (!c.recommendedMachine || l.recommendedMachineId === c.recommendedMachine),
   )
 }
 
@@ -23,22 +25,24 @@ export function CampaignsPage() {
   const [province, setProvince] = useState('')
   const [city, setCity] = useState('')
   const [category, setCategory] = useState('')
+  const [recommendedMachine, setRecommendedMachine] = useState('')
   const [target, setTarget] = useState(100)
   const cities = useMemo(() => citiesOfProvince(province), [province])
 
   const create = () => {
-    const auto = name || `${target} ${category || 'negocios'} en ${city || province || 'Argentina'}`
-    addCampaign({ name: auto, province, city, category, target })
+    const machineName = MACHINES.find((m) => m.id === recommendedMachine)?.category
+    const auto = name || `${target} ${category || machineName || 'oportunidades'} en ${city || province || 'Argentina'}`
+    addCampaign({ name: auto, province, city, category, recommendedMachine, target })
     setName('')
   }
 
   return (
-    <AppShell title="Campañas" subtitle="Organizá tu prospección por objetivos">
+    <AppShell title="Campanas" subtitle="Organizar prospeccion industrial por rubro, zona y maquina">
       <Card className="p-5">
-        <h3 className="mb-3 text-sm font-semibold text-slate-100">Nueva campaña</h3>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-          <Field label="Nombre (opcional)">
-            <Input placeholder="Ej: Barberías Córdoba" value={name} onChange={(e) => setName(e.target.value)} />
+        <h3 className="mb-3 text-sm font-semibold text-slate-100">Nueva campana</h3>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
+          <Field label="Nombre">
+            <Input placeholder="Ej: Fibra metalurgicas Cordoba" value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
           <Field label="Provincia">
             <Select value={province} onChange={(e) => { setProvince(e.target.value); setCity('') }}>
@@ -52,10 +56,16 @@ export function CampaignsPage() {
               {cities.map((c) => <option key={c.name} value={c.name}>{c.name}</option>)}
             </Select>
           </Field>
-          <Field label="Rubro">
+          <Field label="Industria">
             <Select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">Todos</option>
+              <option value="">Todas</option>
               {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            </Select>
+          </Field>
+          <Field label="Maquina">
+            <Select value={recommendedMachine} onChange={(e) => setRecommendedMachine(e.target.value)}>
+              <option value="">Todas</option>
+              {MACHINES.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </Select>
           </Field>
           <Field label={`Objetivo: ${target}`}>
@@ -63,17 +73,18 @@ export function CampaignsPage() {
           </Field>
         </div>
         <div className="mt-3 flex justify-end">
-          <Button onClick={create}>+ Crear campaña</Button>
+          <Button onClick={create}>Crear campana</Button>
         </div>
       </Card>
 
       {campaigns.length === 0 ? (
-        <EmptyState icon="🎯" title="Sin campañas todavía" subtitle="Creá tu primera campaña para organizar la prospección." />
+        <EmptyState title="Sin campanas todavia" subtitle="Crea una campana para organizar prospeccion por industria o maquina." />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {campaigns.map((c) => {
             const cl = campaignLeads(c, leads)
             const contacted = cl.filter((l) => l.stage !== 'nuevo').length
+            const quoted = cl.filter((l) => l.stage === 'propuesta' || l.stage === 'ganado').length
             const won = cl.filter((l) => l.stage === 'ganado').length
             const conv = cl.length ? Math.round((won / cl.length) * 100) : 0
             const value = cl.reduce((s, l) => s + l.potentialValue, 0)
@@ -85,12 +96,12 @@ export function CampaignsPage() {
                     <h4 className="font-semibold text-slate-100">{c.name}</h4>
                     <p className="text-xs text-slate-500">{formatDate(c.createdAt)}</p>
                   </div>
-                  <button onClick={() => removeCampaign(c.id)} className="text-slate-600 hover:text-rose-400">✕</button>
+                  <button onClick={() => removeCampaign(c.id)} className="text-slate-600 hover:text-rose-400">x</button>
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                  <Metric label="Negocios" value={`${cl.length}`} />
-                  <Metric label="Contactados" value={`${contacted}`} />
-                  <Metric label="Conversión" value={`${conv}%`} />
+                  <Metric label="Oportun." value={`${cl.length}`} />
+                  <Metric label="Contactadas" value={`${contacted}`} />
+                  <Metric label="Cotizadas" value={`${quoted}`} />
                 </div>
                 <div className="mt-3">
                   <div className="mb-1 flex justify-between text-xs text-slate-500">
@@ -101,17 +112,30 @@ export function CampaignsPage() {
                     <div className="h-full rounded-full bg-electric-400" style={{ width: `${progress}%` }} />
                   </div>
                 </div>
-                <p className="mt-3 text-xs text-slate-400">Valor potencial: <span className="font-semibold text-electric-300">{formatCurrency(value)}</span></p>
+                <p className="mt-3 text-xs text-slate-400">
+                  Valor potencial: <span className="font-semibold text-electric-300">{formatCurrency(value)}</span>
+                </p>
+                <p className="text-xs text-slate-500">Conversion ganada: {conv}%</p>
                 <Button
                   variant="secondary"
                   size="sm"
                   className="mt-3 w-full"
                   onClick={() => {
-                    setFilters({ province: c.province, city: c.city, category: c.category, query: '', opportunity: '', stage: '', priority: '' })
+                    setFilters({
+                      province: c.province,
+                      city: c.city,
+                      category: c.category,
+                      recommendedMachine: c.recommendedMachine,
+                      query: '',
+                      opportunity: '',
+                      minScore: 0,
+                      stage: '',
+                      priority: '',
+                    })
                     navigate('/prospeccion')
                   }}
                 >
-                  Ver leads de la campaña →
+                  Ver oportunidades
                 </Button>
               </Card>
             )

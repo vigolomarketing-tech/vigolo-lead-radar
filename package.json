@@ -1,9 +1,9 @@
 {
-  "name": "vigolo-lead-radar",
+  "name": "2gtech3d-lead-radar",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Herramienta interna de Vigolo Web Studio para sondear zonas, detectar negocios con oportunidad de venderles paginas web, organizar leads y generar mensajes de prospeccion.",
+  "description": "Herramienta comercial para detectar empresas argentinas con probabilidad de comprar maquinas CNC, laser y equipos industriales de 2GTech3D.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

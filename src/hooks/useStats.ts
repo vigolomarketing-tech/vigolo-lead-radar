@@ -5,7 +5,10 @@ import type { DashboardStats, Lead } from '../types'
 
 const CONTACTED_STAGES = ['contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado']
 
-function bestBy(leads: Lead[], key: 'zone' | 'category' | 'province' | 'city'): string {
+function bestBy(
+  leads: Lead[],
+  key: 'zone' | 'category' | 'province' | 'city' | 'recommendedMachineName' | 'industry',
+): string {
   const map = new Map<string, { sum: number; n: number }>()
   for (const l of leads) {
     const k = l[key]
@@ -14,7 +17,7 @@ function bestBy(leads: Lead[], key: 'zone' | 'category' | 'province' | 'city'): 
     cur.n += 1
     map.set(k, cur)
   }
-  let best = '—'
+  let best = '-'
   let bestAvg = -1
   for (const [k, v] of map) {
     const avg = v.sum / v.n
@@ -55,6 +58,8 @@ export function useStats(): DashboardStats {
       bestCity: bestBy(leads, 'city'),
       bestZone: bestBy(leads, 'zone'),
       bestCategory: bestBy(leads, 'category'),
+      bestMachine: bestBy(leads, 'recommendedMachineName'),
+      bestIndustry: bestBy(leads, 'industry'),
     }
   }, [leads])
 }

@@ -1,113 +1,88 @@
 // =====================================================================
-// Generador de DEMO: crea una landing profesional personalizada para un
-// negocio, lista para mostrarle al cliente. 100% client-side.
+// Generador de ficha tecnico-comercial para una oportunidad industrial.
+// Mantiene el flujo "demo" del sistema original, pero ahora produce una
+// propuesta HTML centrada en la maquina 2GTech3D recomendada.
 // =====================================================================
 
 import { APP } from '../../config/app'
+import { MACHINE_BY_ID } from '../../config/machines'
 import type { Lead } from '../../types'
 
-const PALETTES = [
-  { a: '#3EA6FF', b: '#1f8fef' },
-  { a: '#34d399', b: '#059669' },
-  { a: '#f472b6', b: '#db2777' },
-  { a: '#fbbf24', b: '#d97706' },
-  { a: '#a78bfa', b: '#7c3aed' },
-  { a: '#22d3ee', b: '#0891b2' },
-]
-
-function hash(s: string): number {
-  let h = 0
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0
-  return Math.abs(h)
-}
-
-const SERVICES: Record<string, string[]> = {
-  default: ['Atención personalizada', 'Calidad garantizada', 'Turnos y consultas online'],
-  barberia: ['Cortes clásicos y modernos', 'Arreglo de barba', 'Reservá tu turno online'],
-  gimnasio: ['Musculación y funcional', 'Clases grupales', 'Planes personalizados'],
-  restaurante: ['Menú del día', 'Reservas online', 'Delivery y take away'],
-  estetica: ['Tratamientos faciales', 'Depilación', 'Reservá por WhatsApp'],
-  inmobiliaria: ['Compra y venta', 'Alquileres', 'Tasaciones sin cargo'],
-}
-
-function servicesFor(category: string): string[] {
-  const key = category.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const match = Object.keys(SERVICES).find((k) => k !== 'default' && key.includes(k))
-  return SERVICES[match ?? 'default']
-}
-
 export function generateDemoHtml(lead: Lead): string {
-  const p = PALETTES[hash(lead.name) % PALETTES.length]
-  const services = servicesFor(lead.category)
+  const machine = MACHINE_BY_ID[lead.recommendedMachineId]
   const wa = lead.signals.whatsapp?.replace(/[^\d]/g, '')
   const waHref = wa ? `https://wa.me/${wa}` : '#contacto'
-  const initials = lead.name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
 
   return `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${lead.name} — ${lead.category} en ${lead.city}</title>
+<title>${lead.name} - ${machine.name}</title>
 <style>
-  :root { --a:${p.a}; --b:${p.b}; }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',system-ui,sans-serif; color:#0f172a; background:#fff; }
-  .hero { background:linear-gradient(135deg,var(--b),var(--a)); color:#fff; padding:80px 24px; text-align:center; }
-  .logo { width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.2);display:grid;place-items:center;margin:0 auto 20px;font-weight:800;font-size:28px;backdrop-filter:blur(4px); }
-  .hero h1 { font-size:44px; margin-bottom:12px; }
-  .hero p { font-size:19px; opacity:.95; }
-  .cta { display:inline-block;margin-top:28px;background:#fff;color:var(--b);padding:14px 30px;border-radius:999px;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.2); }
-  .wrap { max-width:1000px;margin:0 auto;padding:64px 24px; }
-  .grid { display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-  .card { border:1px solid #e2e8f0;border-radius:16px;padding:28px;background:#f8fafc; }
-  .card h3 { color:var(--b);margin-bottom:8px; }
-  h2 { text-align:center;font-size:32px;margin-bottom:8px; }
-  .sub { text-align:center;color:#64748b;margin-bottom:40px; }
-  .stats { display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:20px; }
-  .stat b { font-size:34px;color:var(--a); }
-  footer { background:#050816;color:#94a3b8;text-align:center;padding:40px 24px;font-size:14px; }
-  footer a { color:var(--a);text-decoration:none; }
+  body { font-family:Inter,Segoe UI,system-ui,sans-serif; color:#0f172a; background:#f8fafc; }
+  header { background:#050816; color:white; padding:64px 24px; }
+  .wrap { max-width:1060px; margin:0 auto; }
+  .eyebrow { color:#3EA6FF; font-weight:800; letter-spacing:.08em; text-transform:uppercase; font-size:12px; }
+  h1 { margin-top:12px; font-size:42px; line-height:1.05; max-width:850px; }
+  .lead { margin-top:16px; color:#cbd5e1; font-size:18px; max-width:760px; }
+  .cta { display:inline-block; margin-top:28px; background:#3EA6FF; color:white; padding:13px 24px; border-radius:10px; font-weight:800; text-decoration:none; }
+  main { padding:40px 24px; }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); }
+  .card { background:white; border:1px solid #e2e8f0; border-radius:12px; padding:20px; box-shadow:0 10px 30px rgba(15,23,42,.06); }
+  .card h2 { font-size:15px; color:#334155; margin-bottom:10px; }
+  .value { color:#0f172a; font-size:22px; font-weight:900; }
+  ul { margin-left:18px; color:#334155; line-height:1.7; }
+  .section { margin-top:22px; }
+  footer { color:#64748b; text-align:center; padding:28px; font-size:13px; }
 </style>
 </head>
 <body>
-  <header class="hero">
-    <div class="logo">${initials}</div>
-    <h1>${lead.name}</h1>
-    <p>${lead.category} en ${lead.city}${lead.province ? ', ' + lead.province : ''}</p>
-    <a class="cta" href="${waHref}">Contactanos por WhatsApp</a>
-    ${lead.signals.reviewsCount ? `<div class="stats"><div class="stat"><b>${lead.signals.rating?.toFixed(1) ?? '5.0'}★</b><div>Calificación</div></div><div class="stat"><b>${lead.signals.reviewsCount}+</b><div>Clientes felices</div></div></div>` : ''}
-  </header>
-
-  <section class="wrap">
-    <h2>Lo que ofrecemos</h2>
-    <p class="sub">Calidad y confianza para vos</p>
-    <div class="grid">
-      ${services.map((s) => `<div class="card"><h3>${s}</h3><p>Nos ocupamos de que tengas la mejor experiencia.</p></div>`).join('')}
+  <header>
+    <div class="wrap">
+      <div class="eyebrow">${APP.name}</div>
+      <h1>${machine.name} para ${lead.name}</h1>
+      <p class="lead">${lead.category} en ${lead.city}, ${lead.province}. Oportunidad ${lead.scoreLevel} con score ${lead.score}/100 y ticket probable ${lead.ticketRange}.</p>
+      <a class="cta" href="${waHref}">Iniciar contacto tecnico</a>
     </div>
-  </section>
+  </header>
+  <main class="wrap">
+    <div class="grid">
+      <div class="card"><h2>Maquina recomendada</h2><div class="value">${machine.category}</div><p>${machine.name}</p></div>
+      <div class="card"><h2>Valor potencial</h2><div class="value">${lead.ticketRange}</div><p>${lead.closeProbability}% probabilidad inicial</p></div>
+      <div class="card"><h2>Perfil industrial</h2><div class="value">${lead.companySize}</div><p>${lead.industrialMaturity}</p></div>
+      <div class="card"><h2>Materiales</h2><p>${machine.materials.join(', ')}</p></div>
+    </div>
 
-  <section class="wrap" style="background:#f8fafc;border-radius:24px;text-align:center;">
-    <h2>¿Listos para atenderte?</h2>
-    <p class="sub">Escribinos y coordinamos hoy mismo.</p>
-    <a class="cta" style="color:#fff;background:linear-gradient(135deg,var(--b),var(--a))" href="${waHref}" id="contacto">Escribir por WhatsApp</a>
-  </section>
-
+    <div class="grid section">
+      <div class="card">
+        <h2>Aplicaciones relevantes</h2>
+        <ul>${machine.applications.map((x) => `<li>${x}</li>`).join('')}</ul>
+      </div>
+      <div class="card">
+        <h2>Beneficios comerciales</h2>
+        <ul>${machine.benefits.map((x) => `<li>${x}</li>`).join('')}</ul>
+      </div>
+      <div class="card">
+        <h2>Preguntas de calificacion</h2>
+        <ul>
+          <li>Que materiales y espesores trabajan?</li>
+          <li>Que proceso tercerizan hoy?</li>
+          <li>Volumen mensual aproximado?</li>
+          <li>Espacio, energia y operador disponible?</li>
+          <li>Buscan compra directa o financiacion?</li>
+        </ul>
+      </div>
+    </div>
+  </main>
   <footer>
-    ${lead.address ? lead.address + ' · ' : ''}${lead.signals.phone ?? ''}<br/>
-    Demo generada por <a href="#">${APP.agency.name}</a> · Vigolo Lead Radar
+    Ficha generada por ${APP.agency.name} para uso comercial interno. Fuente de catalogo: 2GTech3D.
   </footer>
 </body>
 </html>`
 }
 
-/** Abre la demo en una pestaña nueva. */
 export function openDemo(html: string): void {
   const blob = new Blob([html], { type: 'text/html' })
   const url = URL.createObjectURL(blob)

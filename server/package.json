@@ -1,8 +1,8 @@
 {
-  "name": "vigolo-lead-radar-api",
+  "name": "2gtech3d-lead-radar-api",
   "version": "1.0.0",
   "private": true,
-  "description": "Backend/proxy de Vigolo Lead Radar (Cloudflare Worker) para Google Places y OpenAI.",
+  "description": "Backend/proxy de 2GTech3D Lead Radar (Cloudflare Worker) para Google Places y OpenAI.",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy"

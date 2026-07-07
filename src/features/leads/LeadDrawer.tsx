@@ -3,18 +3,19 @@ import { Drawer } from '../../components/ui/Drawer'
 import { ScoreRing } from '../../components/ui/ScoreRing'
 import { OpportunityBadge, PresenceBadge, PriorityBadge, StageBadge } from '../../components/ui/badges'
 import { Button } from '../../components/ui/primitives'
+import { formatCurrency } from '../../lib/format'
+import { generateDemoHtml, openDemo } from '../../services/demo/generateDemo'
+import { useLeadStore } from '../../store/useLeadStore'
+import { cn } from '../../utils/cn'
 import { AnalysisPanel } from '../analysis/AnalysisPanel'
 import { MessagesPanel } from '../messages/MessagesPanel'
 import { CrmPanel } from './CrmPanel'
-import { useLeadStore } from '../../store/useLeadStore'
-import { generateDemoHtml, openDemo } from '../../services/demo/generateDemo'
-import { cn } from '../../utils/cn'
 import type { Lead } from '../../types'
 
 type Tab = 'resumen' | 'analisis' | 'mensajes' | 'crm'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'resumen', label: 'Resumen' },
-  { id: 'analisis', label: 'Análisis IA' },
+  { id: 'analisis', label: 'Analisis IA' },
   { id: 'mensajes', label: 'Mensajes' },
   { id: 'crm', label: 'CRM' },
 ]
@@ -43,19 +44,21 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
       <div className="sticky top-0 z-10 border-b border-white/10 bg-base-950/90 p-5 backdrop-blur">
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-start gap-3">
             <ScoreRing score={lead.score} size={60} />
             <div className="min-w-0">
               <h2 className="text-lg font-bold text-slate-50">{lead.name}</h2>
-              <p className="text-sm text-slate-400">{lead.category} · {lead.city}, {lead.province}</p>
+              <p className="text-sm text-slate-400">
+                {lead.category} · {lead.city}, {lead.province}
+              </p>
+              <p className="mt-1 text-xs font-semibold text-cyan-300">{lead.recommendedMachineName}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <OpportunityBadge score={lead.score} />
-                <PresenceBadge presence={lead.digitalPresence} />
                 <StageBadge stage={lead.stage} />
                 <PriorityBadge priority={lead.priority} />
+                <PresenceBadge presence={lead.digitalPresence} />
               </div>
             </div>
           </div>
@@ -81,7 +84,6 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 space-y-4 p-5">
         {tab === 'resumen' && <Overview lead={lead} />}
         {tab === 'analisis' && <AnalysisPanel lead={lead} />}
@@ -89,20 +91,19 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         {tab === 'crm' && <CrmPanel lead={lead} />}
       </div>
 
-      {/* Footer */}
       <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-white/10 bg-base-950/90 p-4 backdrop-blur">
         <Button
           variant="danger"
           size="sm"
           onClick={() => {
-            if (confirm(`¿Eliminar "${lead.name}" de la lista?`)) removeLead(lead.id)
+            if (confirm(`Eliminar "${lead.name}" de la lista?`)) removeLead(lead.id)
           }}
         >
           Eliminar
         </Button>
         <div className="flex gap-2">
-          <Button variant="success" size="sm" onClick={createDemo} title="Generar una landing de muestra para el cliente">
-            ✨ Crear demo
+          <Button variant="success" size="sm" onClick={createDemo} title="Generar ficha tecnico-comercial para el lead">
+            Crear ficha
           </Button>
           <Button variant="secondary" size="sm" onClick={onClose}>
             Cerrar
@@ -117,21 +118,45 @@ function Overview({ lead }: { lead: Lead }) {
   const rows: [string, string | undefined, string?][] = [
     ['Provincia', lead.province],
     ['Ciudad', lead.city],
-    ['Dirección', lead.address],
-    ['Teléfono', lead.signals.phone, lead.signals.phone ? `tel:${lead.signals.phone.replace(/[^\d+]/g, '')}` : undefined],
+    ['Direccion', lead.address],
+    ['Telefono', lead.signals.phone, lead.signals.phone ? `tel:${lead.signals.phone.replace(/[^\d+]/g, '')}` : undefined],
     ['WhatsApp', lead.signals.whatsapp, lead.signals.whatsapp ? `https://wa.me/${lead.signals.whatsapp.replace(/[^\d]/g, '')}` : undefined],
-    ['Sitio web', lead.signals.website ?? 'Sin web', lead.signals.website],
+    ['Web / referencia', lead.signals.website ?? 'Sin trazabilidad digital', lead.signals.website],
     ['Instagram', lead.signals.instagram, lead.signals.instagram ? `https://instagram.com/${lead.signals.instagram.replace(/^@/, '')}` : undefined],
-    ['Facebook', lead.signals.facebook],
     ['LinkedIn', lead.signals.linkedin],
-    ['Google', lead.signals.reviewsCount != null ? `${lead.signals.reviewsCount} reseñas · ${lead.signals.rating?.toFixed(1) ?? '—'}★` : undefined],
+    ['Google', lead.signals.reviewsCount != null ? `${lead.signals.reviewsCount} resenas · ${lead.signals.rating?.toFixed(1) ?? '-'} estrellas` : undefined],
     ['Estado', lead.openingHours?.openNow === undefined ? undefined : lead.openingHours.openNow ? 'Abierto ahora' : 'Cerrado'],
     ['Maps', 'Ver en Google Maps', lead.mapsUrl],
   ]
+
   return (
     <div className="space-y-4">
+      <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/[0.04] p-4">
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-cyan-300">Maquina recomendada</h4>
+        <p className="text-base font-semibold text-slate-100">{lead.recommendedMachineName}</p>
+        <p className="mt-1 text-sm text-slate-300">{lead.scoreHeadline}</p>
+        <div className="mt-3 grid gap-2 text-xs text-slate-300 sm:grid-cols-2">
+          <span>Categoria: {lead.recommendedMachineCategory}</span>
+          <span>Ticket: {lead.ticketRange}</span>
+          <span>Valor ponderado: {formatCurrency(lead.potentialValue)}</span>
+          <span>Cierre estimado: {lead.closeProbability}%</span>
+        </div>
+      </div>
+
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Datos del negocio</h4>
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Perfil industrial</h4>
+        <dl className="grid gap-2 text-sm sm:grid-cols-2">
+          <Info label="Rubro" value={lead.industry} />
+          <Info label="Tamanio" value={lead.companySize} />
+          <Info label="Nivel industrial" value={lead.industrialMaturity} />
+          <Info label="Potencial" value={lead.purchasePotential} />
+          <Info label="Materiales" value={lead.recommendedMaterials.slice(0, 4).join(', ')} />
+          <Info label="Aplicaciones" value={lead.recommendedApplications.slice(0, 4).join(', ')} />
+        </dl>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Datos de contacto</h4>
         <dl className="space-y-2 text-sm">
           {rows.filter(([, v]) => v).map(([label, value, href]) => (
             <div key={label} className="flex items-baseline justify-between gap-3">
@@ -149,10 +174,15 @@ function Overview({ lead }: { lead: Lead }) {
           ))}
         </dl>
       </div>
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Oportunidad</h4>
-        <p className="text-sm text-slate-300">{lead.scoreHeadline}</p>
-      </div>
+    </div>
+  )
+}
+
+function Info({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-slate-500">{label}</dt>
+      <dd className="mt-0.5 text-slate-200">{value}</dd>
     </div>
   )
 }

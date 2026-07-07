@@ -32,16 +32,16 @@ export function MessagesPanel({ lead }: { lead: Lead }) {
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h4 className="text-sm font-semibold text-slate-100">IA Comercial</h4>
-          <p className="text-xs text-slate-500">12 variantes con tono argentino. Solo copiar y pegar (no se envían solos).</p>
+          <p className="text-xs text-slate-500">WhatsApp, Email, LinkedIn, Instagram, seguimientos y objeciones. No se envian solos.</p>
         </div>
         <Button size="sm" onClick={generate} disabled={loading}>
-          {loading ? <Spinner /> : messages.length ? '↻ Regenerar' : '✨ Generar'}
+          {loading ? <Spinner /> : messages.length ? 'Regenerar' : 'Generar'}
         </Button>
       </div>
 
       {messages.length === 0 && !loading && (
         <p className="rounded-lg bg-white/5 px-3 py-6 text-center text-xs text-slate-400">
-          Generá los mensajes personalizados para <span className="font-semibold text-slate-200">{lead.name}</span>.
+          Genera mensajes personalizados para <span className="font-semibold text-slate-200">{lead.name}</span> y {lead.recommendedMachineName}.
         </p>
       )}
 

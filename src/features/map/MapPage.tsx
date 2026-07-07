@@ -35,7 +35,7 @@ function ClusterLayer({ leads, onSelect }: { leads: Lead[]; onSelect: (id: strin
       const color = OPPORTUNITY_HEX[levelFromScore(l.score)]
       const m = L.marker([l.location.lat, l.location.lng], { icon: dotIcon(color) })
       m.bindPopup(
-        `<strong>${l.name}</strong><br/><span style="color:#94a3b8">${l.category} · ${l.city}, ${l.province}</span><br/><span style="color:#94a3b8">Score ${l.score} · ${l.signals.reviewsCount ?? 0} reseñas</span><br/><button id="lead-${l.id}" style="margin-top:6px;background:#3EA6FF;color:#fff;border:0;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer">Ver detalle</button>`,
+        `<strong>${l.name}</strong><br/><span style="color:#94a3b8">${l.category} · ${l.city}, ${l.province}</span><br/><span style="color:#94a3b8">${l.recommendedMachineName}</span><br/><span style="color:#94a3b8">Score ${l.score} · ${l.ticketRange}</span><br/><button id="lead-${l.id}" style="margin-top:6px;background:#3EA6FF;color:#fff;border:0;border-radius:8px;padding:4px 10px;font-size:12px;font-weight:600;cursor:pointer">Ver detalle</button>`,
       )
       m.on('popupopen', () => {
         const btn = document.getElementById(`lead-${l.id}`)
@@ -102,7 +102,7 @@ export function MapPage() {
               {OPPORTUNITY_LABEL[lvl]}
             </span>
           ))}
-          <span className="text-slate-500">{leads.length} negocios</span>
+          <span className="text-slate-500">{leads.length} oportunidades</span>
         </div>
         <div className="flex items-center gap-2">
           <Select value={province} onChange={(e) => setProvince(e.target.value)} className="w-44">
@@ -127,7 +127,7 @@ export function MapPage() {
       </div>
 
       {leads.length === 0 ? (
-        <EmptyState title="Sin ubicaciones" subtitle="Hacé un sondeo para ver negocios en el mapa." />
+        <EmptyState title="Sin ubicaciones" subtitle="Hace un sondeo para ver oportunidades industriales en el mapa." />
       ) : (
         <Card className="overflow-hidden p-0">
           <div className="h-[70vh]">

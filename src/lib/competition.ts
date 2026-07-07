@@ -1,24 +1,22 @@
 // =====================================================================
-// Análisis de competencia: compara un negocio con otros del mismo rubro
-// y ciudad para ubicar dónde está parado y por qué conviene mejorar.
+// Analisis competitivo industrial: compara empresas del mismo rubro/ciudad
+// por encaje con maquinas 2GTech3D, ticket y urgencia comercial.
 // =====================================================================
 
 import type { Lead } from '../types'
 
 export interface CompetitionInsight {
   peers: number
-  reviewsRank: number
-  webBetterThan: number // % de la competencia con peor web
-  bestReviews?: Lead
-  bestWeb?: Lead
+  scoreRank: number
+  fitBetterThan: number
+  bestScore?: Lead
+  bestFit?: Lead
   summary: string
 }
 
-const PRESENCE_RANK: Record<string, number> = {
-  'sin-web': 0,
-  'web-vieja': 1,
-  'web-aceptable': 2,
-  'buen-potencial': 3,
+function fitValue(lead: Lead): number {
+  const machinePriority = { critica: 20, alta: 15, media: 10, baja: 4 }[lead.recommendedMachinePriority]
+  return lead.score + machinePriority + Math.min(15, Math.round(lead.potentialValue / 5000000))
 }
 
 export function analyzeCompetition(lead: Lead, all: Lead[]): CompetitionInsight | null {
@@ -28,31 +26,27 @@ export function analyzeCompetition(lead: Lead, all: Lead[]): CompetitionInsight 
   if (peers.length === 0) return null
 
   const group = [lead, ...peers]
-  const byReviews = [...group].sort(
-    (a, b) => (b.signals.reviewsCount ?? 0) - (a.signals.reviewsCount ?? 0),
-  )
-  const byWeb = [...group].sort(
-    (a, b) => PRESENCE_RANK[b.digitalPresence] - PRESENCE_RANK[a.digitalPresence],
-  )
-  const reviewsRank = byReviews.findIndex((l) => l.id === lead.id) + 1
-  const myWeb = PRESENCE_RANK[lead.digitalPresence]
-  const worseWeb = peers.filter((l) => PRESENCE_RANK[l.digitalPresence] < myWeb).length
-  const webBetterThan = Math.round((worseWeb / peers.length) * 100)
+  const byScore = [...group].sort((a, b) => b.score - a.score)
+  const byFit = [...group].sort((a, b) => fitValue(b) - fitValue(a))
+  const scoreRank = byScore.findIndex((l) => l.id === lead.id) + 1
+  const myFit = fitValue(lead)
+  const worseFit = peers.filter((l) => fitValue(l) < myFit).length
+  const fitBetterThan = Math.round((worseFit / peers.length) * 100)
 
-  const bestWeb = byWeb[0]
-  const bestReviews = byReviews[0]
+  const bestScore = byScore[0]
+  const bestFit = byFit[0]
 
   const summary =
-    lead.digitalPresence === 'sin-web'
-      ? `Entre ${peers.length + 1} ${lead.category.toLowerCase()} de ${lead.city}, ${lead.name} está #${reviewsRank} en reseñas pero SIN web, mientras ${bestWeb.id !== lead.id ? bestWeb.name : 'la competencia'} ya tiene presencia web. Una web lo pondría por delante.`
-      : `${lead.name} compite con ${peers.length} negocios similares en ${lead.city}. Está #${reviewsRank} en reseñas y su web supera al ${webBetterThan}% de la competencia. Hay margen para liderar.`
+    scoreRank === 1
+      ? `${lead.name} lidera el segmento ${lead.category.toLowerCase()} en ${lead.city}: score ${lead.score}, maquina recomendada ${lead.recommendedMachineName} y ticket ${lead.ticketRange}.`
+      : `${lead.name} compite con ${peers.length} empresas similares en ${lead.city}. Esta #${scoreRank} por score y supera al ${fitBetterThan}% por encaje maquina/ticket.`
 
   return {
     peers: peers.length,
-    reviewsRank,
-    webBetterThan,
-    bestReviews: bestReviews.id !== lead.id ? bestReviews : undefined,
-    bestWeb: bestWeb.id !== lead.id ? bestWeb : undefined,
+    scoreRank,
+    fitBetterThan,
+    bestScore: bestScore.id !== lead.id ? bestScore : undefined,
+    bestFit: bestFit.id !== lead.id ? bestFit : undefined,
     summary,
   }
 }

@@ -23,20 +23,30 @@ export function LeadCard({ lead }: { lead: Lead }) {
 
         <div className="flex flex-wrap gap-1.5">
           <OpportunityBadge score={lead.score} />
-          <PresenceBadge presence={lead.digitalPresence} />
           <StageBadge stage={lead.stage} />
+          <span className="inline-flex items-center rounded-full bg-cyan-500/15 px-2.5 py-0.5 text-xs font-semibold text-cyan-300 ring-1 ring-inset ring-cyan-400/30">
+            {lead.recommendedMachineCategory}
+          </span>
+          <PresenceBadge presence={lead.digitalPresence} />
           {lead.analysis && (
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-semibold text-violet-300 ring-1 ring-inset ring-violet-400/30">
-              ✦ Analizado
+              Analizado
             </span>
           )}
         </div>
 
+        <div className="rounded-lg bg-white/[0.03] px-3 py-2">
+          <p className="truncate text-xs font-semibold text-slate-200">{lead.recommendedMachineName}</p>
+          <p className="mt-0.5 truncate text-[11px] text-slate-500">
+            {lead.companySize} · {lead.industrialMaturity} · {lead.ticketRange}
+          </p>
+        </div>
+
         <div className="flex items-center justify-between border-t border-white/5 pt-2 text-xs text-slate-400">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            {lead.signals.whatsapp && <span>🟢 WhatsApp</span>}
-            {lead.signals.instagram && <span className="truncate">📷 {lead.signals.instagram}</span>}
-            {typeof lead.signals.reviewsCount === 'number' && <span>⭐ {lead.signals.reviewsCount}</span>}
+            {lead.signals.whatsapp && <span>WhatsApp</span>}
+            {lead.signals.instagram && <span className="truncate">{lead.signals.instagram}</span>}
+            {typeof lead.signals.reviewsCount === 'number' && <span>{lead.signals.reviewsCount} resenas</span>}
           </span>
           <span className="shrink-0 font-semibold text-electric-300">{formatCurrency(lead.potentialValue)}</span>
         </div>

@@ -2,9 +2,9 @@ import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AppShell } from '../../components/layout/AppShell'
 import { Button, Card, Input, Spinner } from '../../components/ui/primitives'
+import { parseCommand, type ParsedCommand } from '../../lib/commandParser'
 import { aiAdvisor } from '../../services/ai/aiProvider'
 import { useLeadStore } from '../../store/useLeadStore'
-import { parseCommand, type ParsedCommand } from '../../lib/commandParser'
 import { cn } from '../../utils/cn'
 
 interface Msg {
@@ -14,11 +14,11 @@ interface Msg {
 }
 
 const SUGGESTIONS = [
-  '¿Qué negocio conviene contactar primero?',
-  '¿Qué zona tiene mejores oportunidades?',
-  '¿Qué rubro está funcionando mejor?',
-  '¿Qué precio recomendarías?',
-  '¿Cómo le vendería una web / respondo objeciones?',
+  'Que empresa conviene contactar primero?',
+  'Que maquina tiene mas oportunidades?',
+  'Que provincia tiene mejor potencial?',
+  'Que rubro industrial esta funcionando mejor?',
+  'Como vendo una CNC laser fibra?',
 ]
 
 export function AdvisorPage() {
@@ -29,7 +29,7 @@ export function AdvisorPage() {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: 'ai',
-      text: 'Soy tu Asesor IA comercial. Puedo analizar tus leads, priorizar, definir precios, responder objeciones y ejecutar acciones (buscar negocios, crear campañas). Probá: "Buscame barberías sin web en Córdoba" o "Generá una campaña de gimnasios en Rosario".',
+      text: 'Soy tu Asesor IA comercial para 2GTech3D. Puedo priorizar oportunidades, recomendar maquinas, detectar zonas/rubros, armar campanas y ayudarte a responder objeciones sobre inversion industrial.',
     },
   ])
   const [input, setInput] = useState('')
@@ -42,20 +42,18 @@ export function AdvisorPage() {
     setInput('')
     setLoading(true)
 
-    // 1) ¿Es un comando accionable? (filtrar / crear campaña)
     const cmd = parseCommand(question)
     if (cmd.type !== 'none') {
       const text =
         cmd.type === 'campaign'
-          ? `Puedo crear esa campaña. Apretá el botón para confirmarla.`
-          : `Encontré ese segmento. Apretá para ver los negocios filtrados.`
+          ? 'Puedo crear esa campana comercial. Confirma la accion para dejarla lista.'
+          : 'Encontre ese segmento. Confirma para ver las oportunidades filtradas.'
       setMessages((m) => [...m, { role: 'ai', text, action: cmd }])
       setLoading(false)
       requestAnimationFrame(() => endRef.current?.scrollIntoView({ behavior: 'smooth' }))
       return
     }
 
-    // 2) Si no, consulta al asesor (IA/local).
     try {
       const answer = await aiAdvisor(question, { leads })
       setMessages((m) => [...m, { role: 'ai', text: answer }])
@@ -71,7 +69,7 @@ export function AdvisorPage() {
       navigate('/prospeccion')
     } else if (cmd.type === 'campaign' && cmd.campaign) {
       addCampaign({
-        name: `${cmd.campaign.target} ${cmd.campaign.category || 'negocios'}${cmd.campaign.province ? ' en ' + cmd.campaign.province : ''}`,
+        name: `${cmd.campaign.target} ${cmd.campaign.category || 'oportunidades'}${cmd.campaign.province ? ' en ' + cmd.campaign.province : ''}`,
         ...cmd.campaign,
       })
       navigate('/campanas')
@@ -79,7 +77,7 @@ export function AdvisorPage() {
   }
 
   return (
-    <AppShell title="Asesor IA" subtitle="Tu consultor comercial impulsado por IA">
+    <AppShell title="Asesor IA" subtitle="Consultor comercial para maquinas CNC, laser y equipos 2GTech3D">
       <Card className="flex h-[70vh] flex-col p-0">
         <div className="flex-1 space-y-4 overflow-y-auto p-5">
           {messages.map((m, i) => (
@@ -98,7 +96,7 @@ export function AdvisorPage() {
                     onClick={() => runAction(m.action!)}
                     className="mt-2 block w-full rounded-lg bg-electric-500 px-3 py-2 text-center text-xs font-semibold text-white hover:bg-electric-400"
                   >
-                    {m.action.label} →
+                    {m.action.label}
                   </button>
                 )}
               </div>
@@ -133,7 +131,7 @@ export function AdvisorPage() {
             }}
             className="flex gap-2"
           >
-            <Input placeholder="Escribí tu pregunta…" value={input} onChange={(e) => setInput(e.target.value)} />
+            <Input placeholder="Escribi tu pregunta..." value={input} onChange={(e) => setInput(e.target.value)} />
             <Button type="submit" disabled={loading || !input.trim()}>Enviar</Button>
           </form>
         </div>

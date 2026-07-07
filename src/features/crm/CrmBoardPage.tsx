@@ -24,9 +24,9 @@ export function CrmBoardPage() {
   }
 
   return (
-    <AppShell title="CRM" subtitle="Pipeline comercial · arrastrá las tarjetas entre columnas">
+    <AppShell title="CRM" subtitle="Pipeline comercial industrial. Arrastra las tarjetas entre columnas">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-400">{leads.length} leads en el pipeline</p>
+        <p className="text-sm text-slate-400">{leads.length} oportunidades en el pipeline</p>
         <ExportMenu leads={leads} />
       </div>
 
@@ -68,7 +68,7 @@ export function CrmBoardPage() {
                 ))}
                 {items.length === 0 && (
                   <div className="rounded-xl border border-dashed border-white/10 py-6 text-center text-xs text-slate-600">
-                    Soltá acá
+                    Soltar aca
                   </div>
                 )}
               </div>
@@ -106,6 +106,7 @@ function BoardCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-100">{lead.name}</p>
           <p className="truncate text-xs text-slate-400">{lead.category} · {lead.city}</p>
+          <p className="truncate text-xs text-cyan-300">{lead.recommendedMachineName}</p>
         </div>
       </div>
       <div className="mt-2 flex items-center justify-between text-xs">

@@ -1,26 +1,28 @@
 import { useState } from 'react'
 import { AppShell } from '../../components/layout/AppShell'
-import { Field, Input, Select, EmptyState } from '../../components/ui/primitives'
 import { ExportMenu } from '../../components/leads/ExportMenu'
+import { EmptyState, Field, Input, Select } from '../../components/ui/primitives'
 import { VirtualLeadGrid } from '../../components/leads/VirtualLeadGrid'
-import { SearchFilters } from './SearchFilters'
-import { useFilteredLeads, useCategories, useProvinces } from '../../hooks/useFilteredLeads'
-import { useLeadStore } from '../../store/useLeadStore'
+import { useCategories, useCities, useFilteredLeads, useMachines, useProvinces } from '../../hooks/useFilteredLeads'
 import { CRM_STAGE_LABEL, CRM_STAGE_ORDER, OPPORTUNITY_LABEL } from '../../lib/labels'
+import { useLeadStore } from '../../store/useLeadStore'
+import { SearchFilters } from './SearchFilters'
 import type { CrmStage, OpportunityLevel, Priority } from '../../types'
 
 export function ProspectingPage() {
   const filtered = useFilteredLeads()
   const categories = useCategories()
+  const cities = useCities()
+  const machines = useMachines()
   const provinces = useProvinces()
   const { filters, setFilters, resetFilters } = useLeadStore()
   const [feedback, setFeedback] = useState<string | null>(null)
 
   return (
-    <AppShell title="Prospección" subtitle="Encontrá negocios en toda Argentina">
+    <AppShell title="Prospeccion" subtitle="Encontrar empresas argentinas con probabilidad de comprar maquinas 2GTech3D">
       <SearchFilters
         onDone={(n) =>
-          setFeedback(n > 0 ? `Se encontraron ${n} negocios.` : 'Sin resultados con esos criterios.')
+          setFeedback(n > 0 ? `Se encontraron ${n} oportunidades.` : 'Sin resultados con esos criterios.')
         }
       />
       {feedback && (
@@ -29,12 +31,11 @@ export function ProspectingPage() {
         </p>
       )}
 
-      {/* Filtros avanzados */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <Field label="Buscar por nombre">
-              <Input value={filters.query} onChange={(e) => setFilters({ query: e.target.value })} placeholder="Nombre…" />
+          <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+            <Field label="Buscar">
+              <Input value={filters.query} onChange={(e) => setFilters({ query: e.target.value })} placeholder="Empresa, rubro, maquina..." />
             </Field>
             <Field label="Provincia">
               <Select value={filters.province} onChange={(e) => setFilters({ province: e.target.value })}>
@@ -42,10 +43,22 @@ export function ProspectingPage() {
                 {provinces.map((p) => <option key={p} value={p}>{p}</option>)}
               </Select>
             </Field>
-            <Field label="Rubro">
+            <Field label="Ciudad">
+              <Select value={filters.city} onChange={(e) => setFilters({ city: e.target.value })}>
+                <option value="">Todas</option>
+                {cities.map((c) => <option key={c} value={c}>{c}</option>)}
+              </Select>
+            </Field>
+            <Field label="Industria">
               <Select value={filters.category} onChange={(e) => setFilters({ category: e.target.value })}>
-                <option value="">Todos</option>
+                <option value="">Todas</option>
                 {categories.map((c) => <option key={c} value={c}>{c}</option>)}
+              </Select>
+            </Field>
+            <Field label="Maquina">
+              <Select value={filters.recommendedMachine} onChange={(e) => setFilters({ recommendedMachine: e.target.value })}>
+                <option value="">Todas</option>
+                {machines.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
               </Select>
             </Field>
             <Field label="Oportunidad">
@@ -54,30 +67,37 @@ export function ProspectingPage() {
                 {(['alta', 'media', 'baja'] as const).map((o) => <option key={o} value={o}>{OPPORTUNITY_LABEL[o]}</option>)}
               </Select>
             </Field>
-            <Field label="Estado / Prioridad">
-              <div className="flex gap-1.5">
-                <Select value={filters.stage} onChange={(e) => setFilters({ stage: e.target.value as CrmStage | '' })}>
-                  <option value="">Estado</option>
-                  {CRM_STAGE_ORDER.map((s) => <option key={s} value={s}>{CRM_STAGE_LABEL[s]}</option>)}
-                </Select>
-                <Select value={filters.priority} onChange={(e) => setFilters({ priority: e.target.value as Priority | '' })}>
-                  <option value="">Prior.</option>
-                  {(['alta', 'media', 'baja'] as const).map((p) => <option key={p} value={p}>{p}</option>)}
-                </Select>
-              </div>
+            <Field label={`Score ${filters.minScore || 0}+`}>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={5}
+                value={filters.minScore}
+                onChange={(e) => setFilters({ minScore: Number(e.target.value) })}
+                className="w-full accent-electric-400"
+              />
             </Field>
           </div>
           <div className="flex items-center gap-2">
+            <Select value={filters.stage} onChange={(e) => setFilters({ stage: e.target.value as CrmStage | '' })}>
+              <option value="">Estado</option>
+              {CRM_STAGE_ORDER.map((s) => <option key={s} value={s}>{CRM_STAGE_LABEL[s]}</option>)}
+            </Select>
+            <Select value={filters.priority} onChange={(e) => setFilters({ priority: e.target.value as Priority | '' })}>
+              <option value="">Prioridad</option>
+              {(['alta', 'media', 'baja'] as const).map((p) => <option key={p} value={p}>{p}</option>)}
+            </Select>
             <button onClick={resetFilters} className="text-xs text-slate-400 hover:text-slate-200">Limpiar</button>
             <ExportMenu leads={filtered} />
           </div>
         </div>
       </div>
 
-      <p className="text-sm text-slate-400">{filtered.length} negocios</p>
+      <p className="text-sm text-slate-400">{filtered.length} oportunidades industriales</p>
 
       {filtered.length === 0 ? (
-        <EmptyState title="Sin resultados" subtitle="Ajustá los filtros o hacé un nuevo sondeo." />
+        <EmptyState title="Sin resultados" subtitle="Ajusta los filtros o hace un nuevo sondeo industrial." />
       ) : (
         <VirtualLeadGrid leads={filtered} />
       )}

@@ -12,12 +12,12 @@ import {
 import { AppShell } from '../../components/layout/AppShell'
 import { Card } from '../../components/ui/primitives'
 import { useStats } from '../../hooks/useStats'
-import { useLeadStore } from '../../store/useLeadStore'
-import { levelFromScore } from '../../lib/scoring'
 import { CRM_STAGE_ACCENT, CRM_STAGE_LABEL, CRM_STAGE_ORDER, OPPORTUNITY_HEX } from '../../lib/labels'
 import { formatCurrency, formatNumber, formatPercent } from '../../lib/format'
 import { suggestFollowUps } from '../../lib/followups'
-import type { CrmStage } from '../../types'
+import { levelFromScore } from '../../lib/scoring'
+import { useLeadStore } from '../../store/useLeadStore'
+import type { CrmStage, Lead } from '../../types'
 
 export function DashboardPage() {
   const stats = useStats()
@@ -35,52 +35,44 @@ export function DashboardPage() {
     color: OPPORTUNITY_HEX[lvl],
   }))
 
-  const zoneMap = new Map<string, number>()
-  leads.forEach((l) => zoneMap.set(l.zone, (zoneMap.get(l.zone) ?? 0) + 1))
-  const zoneData = [...zoneMap.entries()]
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 6)
+  const machineData = topCount(leads, (l) => l.recommendedMachineName, 6)
+  const industryData = topCount(leads, (l) => l.industry, 8)
+  const provinceData = topCount(leads, (l) => l.province, 8)
 
   return (
-    <AppShell title="Dashboard" subtitle="Panorama comercial en tiempo real">
-      {/* KPI principal */}
+    <AppShell title="Dashboard" subtitle="Panorama comercial de oportunidades para maquinas 2GTech3D">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <Kpi label="Leads totales" value={formatNumber(stats.total)} accent="text-electric-300" icon="◧" />
-        <Kpi label="Analizados" value={formatNumber(stats.analyzed)} accent="text-violet-300" icon="✦" />
-        <Kpi label="Oportunidades altas" value={formatNumber(stats.highOpportunity)} accent="text-emerald-300" icon="🔥" />
-        <Kpi label="Contactados" value={formatNumber(stats.contacted)} accent="text-cyan-300" icon="💬" />
-        <Kpi label="Interesados" value={formatNumber(stats.interested)} accent="text-fuchsia-300" icon="⭐" />
-        <Kpi label="Ganados" value={formatNumber(stats.won)} accent="text-emerald-300" icon="✓" />
-        <Kpi label="Facturación potencial" value={formatCurrency(stats.potentialRevenue)} accent="text-electric-300" icon="📈" />
-        <Kpi label="Facturación real" value={formatCurrency(stats.realRevenue)} accent="text-emerald-300" icon="💰" />
+        <Kpi label="Oportunidades" value={formatNumber(stats.total)} accent="text-electric-300" />
+        <Kpi label="Valor potencial" value={formatCurrency(stats.potentialRevenue)} accent="text-electric-300" />
+        <Kpi label="Oportunidades altas" value={formatNumber(stats.highOpportunity)} accent="text-emerald-300" />
+        <Kpi label="Maquina top" value={stats.bestMachine} accent="text-cyan-300" compact />
+        <Kpi label="Rubro top" value={stats.bestIndustry} accent="text-violet-300" compact />
+        <Kpi label="Provincia top" value={stats.bestProvince} accent="text-amber-300" compact />
+        <Kpi label="Contactados" value={formatNumber(stats.contacted)} accent="text-cyan-300" />
+        <Kpi label="Cotizaciones ganadas" value={formatNumber(stats.won)} accent="text-emerald-300" />
       </div>
 
-      {/* Tasas */}
       <div className="grid gap-3 sm:grid-cols-3">
         <RateCard label="Tasa de respuesta" value={stats.responseRate} />
         <RateCard label="Tasa de cierre" value={stats.closeRate} />
         <Card className="p-4">
-          <p className="text-xs text-slate-400">Mejores oportunidades</p>
-          <p className="mt-1 text-sm font-semibold text-slate-100">🇦🇷 {stats.bestProvince}</p>
-          <p className="text-sm font-semibold text-slate-100">📍 {stats.bestCity}</p>
-          <p className="text-sm font-semibold text-slate-100">🏷️ {stats.bestCategory}</p>
+          <p className="text-xs text-slate-400">Mejor foco comercial</p>
+          <p className="mt-1 text-sm font-semibold text-slate-100">{stats.bestMachine}</p>
+          <p className="text-sm text-slate-300">{stats.bestIndustry}</p>
+          <p className="text-xs text-slate-500">{stats.bestCity}, {stats.bestProvince}</p>
         </Card>
       </div>
 
-      {/* Metas + Seguimiento IA */}
       <div className="grid gap-4 lg:grid-cols-2">
         <GoalsCard />
         <FollowUpsCard />
       </div>
 
-      {/* Embudo de conversión */}
       <Card className="p-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-100">Embudo de conversión</h3>
+        <h3 className="mb-3 text-sm font-semibold text-slate-100">Embudo de venta industrial</h3>
         <ConversionFunnel leads={leads} />
       </Card>
 
-      {/* Gráficos */}
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="p-4 lg:col-span-2">
           <h3 className="mb-3 text-sm font-semibold text-slate-100">Pipeline por estado</h3>
@@ -90,46 +82,27 @@ export function DashboardPage() {
               <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
               <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} contentStyle={TOOLTIP} />
               <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                {stageData.map((d) => (
-                  <Cell key={d.name} fill={d.color} />
-                ))}
+                {stageData.map((d) => <Cell key={d.name} fill={d.color} />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </Card>
 
         <Card className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-slate-100">Oportunidad</h3>
+          <h3 className="mb-3 text-sm font-semibold text-slate-100">Nivel de oportunidad</h3>
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={oppData} dataKey="value" nameKey="name" innerRadius={55} outerRadius={90} paddingAngle={3}>
-                {oppData.map((d) => (
-                  <Cell key={d.name} fill={d.color} stroke="transparent" />
-                ))}
+                {oppData.map((d) => <Cell key={d.name} fill={d.color} stroke="transparent" />)}
               </Pie>
               <Tooltip contentStyle={TOOLTIP} />
             </PieChart>
           </ResponsiveContainer>
-          <div className="flex justify-center gap-4 text-xs">
-            {oppData.map((d) => (
-              <span key={d.name} className="flex items-center gap-1 text-slate-400">
-                <span className="h-2 w-2 rounded-full" style={{ background: d.color }} /> {d.name} ({d.value})
-              </span>
-            ))}
-          </div>
         </Card>
 
-        <Card className="p-4 lg:col-span-3">
-          <h3 className="mb-3 text-sm font-semibold text-slate-100">Leads por ciudad</h3>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={zoneData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
-              <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} contentStyle={TOOLTIP} />
-              <Bar dataKey="value" fill="#3EA6FF" radius={[6, 6, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
+        <BarPanel title="Maquinas recomendadas" data={machineData} />
+        <BarPanel title="Rubros encontrados" data={industryData} />
+        <BarPanel title="Provincias" data={provinceData} />
       </div>
     </AppShell>
   )
@@ -143,26 +116,34 @@ const TOOLTIP = {
   fontSize: 12,
 }
 
-function Kpi({ label, value, accent, icon }: { label: string; value: string; accent: string; icon: string }) {
+function topCount(leads: Lead[], getKey: (lead: Lead) => string, limit: number) {
+  const map = new Map<string, number>()
+  leads.forEach((l) => map.set(getKey(l), (map.get(getKey(l)) ?? 0) + 1))
+  return [...map.entries()]
+    .map(([name, value]) => ({ name, value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, limit)
+}
+
+function Kpi({ label, value, accent, compact = false }: { label: string; value: string; accent: string; compact?: boolean }) {
   return (
     <Card className="p-4">
-      <div className={`mb-2 grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-base ${accent}`}>{icon}</div>
-      <div className="text-xl font-extrabold tracking-tight text-slate-50">{value}</div>
-      <div className="text-xs font-medium text-slate-400">{label}</div>
+      <div className={`${compact ? 'line-clamp-2 text-sm' : 'text-xl'} font-extrabold tracking-tight ${accent}`}>{value}</div>
+      <div className="mt-1 text-xs font-medium text-slate-400">{label}</div>
     </Card>
   )
 }
 
 const FUNNEL_STAGES: { stages: CrmStage[]; label: string }[] = [
-  { stages: ['nuevo', 'contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado', 'perdido'], label: 'Encontrados' },
-  { stages: ['contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado'], label: 'Contactados' },
+  { stages: ['nuevo', 'contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado', 'perdido'], label: 'Detectadas' },
+  { stages: ['contactado', 'respondio', 'interesado', 'reunion', 'propuesta', 'ganado'], label: 'Contactadas' },
   { stages: ['respondio', 'interesado', 'reunion', 'propuesta', 'ganado'], label: 'Respondieron' },
-  { stages: ['interesado', 'reunion', 'propuesta', 'ganado'], label: 'Interesados' },
-  { stages: ['propuesta', 'ganado'], label: 'Con propuesta' },
-  { stages: ['ganado'], label: 'Ganados' },
+  { stages: ['interesado', 'reunion', 'propuesta', 'ganado'], label: 'Interesadas' },
+  { stages: ['propuesta', 'ganado'], label: 'Cotizadas' },
+  { stages: ['ganado'], label: 'Ganadas' },
 ]
 
-function ConversionFunnel({ leads }: { leads: import('../../types').Lead[] }) {
+function ConversionFunnel({ leads }: { leads: Lead[] }) {
   const total = leads.length || 1
   return (
     <div className="space-y-2">
@@ -177,7 +158,7 @@ function ConversionFunnel({ leads }: { leads: import('../../types').Lead[] }) {
                 className="flex h-full items-center justify-end rounded-lg px-2 text-[11px] font-bold text-white transition-all"
                 style={{
                   width: `${Math.max(pct, 6)}%`,
-                  background: `linear-gradient(90deg, #1f8fef, #3EA6FF)`,
+                  background: 'linear-gradient(90deg, #1f8fef, #3EA6FF)',
                   opacity: 1 - i * 0.1,
                 }}
               >
@@ -200,31 +181,13 @@ function GoalsCard() {
   const revenuePct = goals.revenueTarget ? Math.min(100, (stats.realRevenue / goals.revenueTarget) * 100) : 0
   return (
     <Card className="p-4">
-      <h3 className="mb-3 text-sm font-semibold text-slate-100">🎯 Metas del mes</h3>
+      <h3 className="mb-3 text-sm font-semibold text-slate-100">Metas comerciales</h3>
       <div className="space-y-4">
-        <div>
-          <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-            <span className="truncate text-slate-400">Clientes cerrados</span>
-            <span className="shrink-0 text-slate-300">{stats.won} / {goals.clientsTarget}</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-emerald-400" style={{ width: `${clientsPct}%` }} />
-          </div>
-        </div>
-        <div>
-          <div className="mb-1 flex items-center justify-between gap-2 text-xs">
-            <span className="truncate text-slate-400">Facturación</span>
-            <span className="shrink-0 text-slate-300">{formatCurrency(stats.realRevenue)} / {formatCurrency(goals.revenueTarget)}</span>
-          </div>
-          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
-            <div className="h-full rounded-full bg-electric-400" style={{ width: `${revenuePct}%` }} />
-          </div>
-        </div>
-
-        {/* Edición de metas (envuelve, nunca desborda) */}
+        <Progress label="Ventas cerradas" value={`${stats.won} / ${goals.clientsTarget}`} pct={clientsPct} color="bg-emerald-400" />
+        <Progress label="Facturacion" value={`${formatCurrency(stats.realRevenue)} / ${formatCurrency(goals.revenueTarget)}`} pct={revenuePct} color="bg-electric-400" />
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-3 text-xs text-slate-400">
           <label className="flex items-center gap-1.5">
-            Meta clientes
+            Meta ventas
             <input
               type="number"
               value={goals.clientsTarget}
@@ -233,12 +196,12 @@ function GoalsCard() {
             />
           </label>
           <label className="flex items-center gap-1.5">
-            Meta facturación
+            Meta ARS
             <input
               type="number"
               value={goals.revenueTarget}
               onChange={(e) => setGoals({ ...goals, revenueTarget: Number(e.target.value) || 0 })}
-              className="w-28 rounded bg-white/5 px-2 py-1 text-slate-100 focus:outline-none focus:ring-1 focus:ring-electric-400/40"
+              className="w-32 rounded bg-white/5 px-2 py-1 text-slate-100 focus:outline-none focus:ring-1 focus:ring-electric-400/40"
             />
           </label>
         </div>
@@ -253,10 +216,10 @@ function FollowUpsCard() {
   const suggestions = suggestFollowUps(leads, 6)
   return (
     <Card className="p-4">
-      <h3 className="mb-1 text-sm font-semibold text-slate-100">✦ Seguimiento IA · a contactar hoy</h3>
-      <p className="mb-3 text-xs text-slate-500">Priorizado por probabilidad de respuesta.</p>
+      <h3 className="mb-1 text-sm font-semibold text-slate-100">Seguimiento sugerido</h3>
+      <p className="mb-3 text-xs text-slate-500">Priorizado por score, estado CRM y proxima accion.</p>
       {suggestions.length === 0 ? (
-        <p className="py-6 text-center text-xs text-slate-500">Todo al día. No hay seguimientos pendientes. 🎉</p>
+        <p className="py-6 text-center text-xs text-slate-500">No hay seguimientos pendientes.</p>
       ) : (
         <ul className="space-y-2">
           {suggestions.map((s) => (
@@ -282,6 +245,22 @@ function FollowUpsCard() {
   )
 }
 
+function BarPanel({ title, data }: { title: string; data: { name: string; value: number }[] }) {
+  return (
+    <Card className="p-4">
+      <h3 className="mb-3 text-sm font-semibold text-slate-100">{title}</h3>
+      <ResponsiveContainer width="100%" height={220}>
+        <BarChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+          <XAxis dataKey="name" tick={{ fill: '#94a3b8', fontSize: 10 }} axisLine={false} tickLine={false} interval={0} angle={-20} textAnchor="end" height={70} />
+          <YAxis allowDecimals={false} tick={{ fill: '#94a3b8', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} contentStyle={TOOLTIP} />
+          <Bar dataKey="value" fill="#3EA6FF" radius={[6, 6, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </Card>
+  )
+}
+
 function RateCard({ label, value }: { label: string; value: number }) {
   return (
     <Card className="p-4">
@@ -291,5 +270,19 @@ function RateCard({ label, value }: { label: string; value: number }) {
         <div className="h-full rounded-full bg-electric-400" style={{ width: `${Math.min(100, value)}%` }} />
       </div>
     </Card>
+  )
+}
+
+function Progress({ label, value, pct, color }: { label: string; value: string; pct: number; color: string }) {
+  return (
+    <div>
+      <div className="mb-1 flex items-center justify-between gap-2 text-xs">
+        <span className="truncate text-slate-400">{label}</span>
+        <span className="shrink-0 text-slate-300">{value}</span>
+      </div>
+      <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   )
 }

@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Button, Card, ProgressBar } from '../../components/ui/primitives'
-import { Spinner } from '../../components/ui/primitives'
-import { useLeadStore } from '../../store/useLeadStore'
-import { generateAuditPdf } from '../../services/audit/pdf'
+import { Button, Card, ProgressBar, Spinner } from '../../components/ui/primitives'
 import { analyzeCompetition } from '../../lib/competition'
+import { generateAuditPdf } from '../../services/audit/pdf'
+import { useLeadStore } from '../../store/useLeadStore'
 import type { AuditFinding, Lead } from '../../types'
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -11,7 +10,7 @@ const PRIORITY_STYLE: Record<string, string> = {
   media: 'bg-amber-500/15 text-amber-300 ring-amber-400/30',
   baja: 'bg-slate-500/15 text-slate-300 ring-slate-400/30',
 }
-const STATUS_ICON: Record<string, string> = { ok: '✓', warn: '▲', fail: '✕' }
+const STATUS_ICON: Record<string, string> = { ok: 'OK', warn: '!', fail: 'X' }
 const STATUS_COLOR: Record<string, string> = {
   ok: 'text-emerald-400',
   warn: 'text-amber-400',
@@ -22,7 +21,6 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
   const analyze = useLeadStore((s) => s.analyze)
   const analyzing = useLeadStore((s) => s.analyzingIds.includes(lead.id))
   const [pdfLoading, setPdfLoading] = useState(false)
-
   const report = lead.analysis
 
   const downloadPdf = async () => {
@@ -39,23 +37,14 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
       <div className="space-y-4">
         <ScoreBreakdown lead={lead} />
         <Card className="p-6 text-center">
-          <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-violet-500/15 text-2xl text-violet-300">
-            ✦
-          </div>
-          <p className="font-semibold text-slate-100">Analizar negocio con IA</p>
+          <p className="font-semibold text-slate-100">Analizar oportunidad con IA</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-slate-400">
-            La IA revisa web, Google Business, Instagram, Facebook y LinkedIn, y genera un
-            diagnóstico completo con impacto y solución.
+            La IA evalua maquina recomendada, materiales, nivel industrial, ticket probable,
+            potencial de compra y proximo paso comercial.
           </p>
           <div className="mt-4 flex justify-center">
             <Button onClick={() => analyze(lead.id)} disabled={analyzing} size="lg">
-              {analyzing ? (
-                <>
-                  <Spinner /> Analizando…
-                </>
-              ) : (
-                '✦ Analizar negocio'
-              )}
+              {analyzing ? (<><Spinner /> Analizando...</>) : 'Analizar oportunidad'}
             </Button>
           </div>
         </Card>
@@ -65,25 +54,23 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
 
   return (
     <div className="space-y-4">
-      {/* Resumen */}
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h4 className="text-sm font-semibold text-slate-100">Diagnóstico inteligente</h4>
+          <h4 className="text-sm font-semibold text-slate-100">Diagnostico industrial</h4>
           <Button size="sm" variant="secondary" onClick={downloadPdf} disabled={pdfLoading}>
-            {pdfLoading ? <Spinner /> : '📄'} Auditoría PDF
+            {pdfLoading ? <Spinner /> : null} Informe PDF
           </Button>
         </div>
         <p className="text-sm leading-relaxed text-slate-300">{report.summary}</p>
       </Card>
 
-      {/* Métricas */}
       <Card className="p-4">
-        <h4 className="mb-3 text-sm font-semibold text-slate-100">Métricas de presencia digital</h4>
+        <h4 className="mb-3 text-sm font-semibold text-slate-100">Metricas de oportunidad</h4>
         <div className="grid gap-3 sm:grid-cols-2">
           {Object.entries(report.metrics).map(([k, v]) => (
             <div key={k}>
               <div className="mb-1 flex justify-between text-xs">
-                <span className="capitalize text-slate-400">{METRIC_LABEL[k] ?? k}</span>
+                <span className="text-slate-400">{METRIC_LABEL[k] ?? k}</span>
                 <span className="font-semibold text-slate-200">{v}/100</span>
               </div>
               <ProgressBar value={v} color={v >= 70 ? '#34d399' : v >= 45 ? '#fbbf24' : '#fb7185'} />
@@ -94,20 +81,16 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
 
       <ScoreBreakdown lead={lead} />
 
-      {/* Hallazgos */}
       <Card className="p-4">
         <h4 className="mb-3 text-sm font-semibold text-slate-100">
-          Problemas encontrados ({report.findings.length})
+          Hallazgos y proximo paso ({report.findings.length})
         </h4>
         <div className="space-y-3">
-          {report.findings.map((f) => (
-            <FindingRow key={f.id} f={f} />
-          ))}
+          {report.findings.map((f) => <FindingRow key={f.id} f={f} />)}
         </div>
       </Card>
 
       <CityCompetition lead={lead} />
-
       {report.competitor && <CompetitorCompare lead={lead} />}
     </div>
   )
@@ -119,28 +102,17 @@ function CityCompetition({ lead }: { lead: Lead }) {
   if (!insight) return null
   return (
     <Card className="p-4">
-      <h4 className="mb-1 text-sm font-semibold text-slate-100">
-        Competencia en {lead.city}
-      </h4>
+      <h4 className="mb-1 text-sm font-semibold text-slate-100">Comparacion local en {lead.city}</h4>
       <p className="mb-3 text-sm text-slate-300">{insight.summary}</p>
       <div className="grid grid-cols-3 gap-2 text-center">
-        <div className="rounded-lg bg-white/5 py-2">
-          <div className="text-lg font-bold text-slate-50">#{insight.reviewsRank}</div>
-          <div className="text-[10px] text-slate-400">en reseñas</div>
-        </div>
-        <div className="rounded-lg bg-white/5 py-2">
-          <div className="text-lg font-bold text-slate-50">{insight.peers}</div>
-          <div className="text-[10px] text-slate-400">competidores</div>
-        </div>
-        <div className="rounded-lg bg-white/5 py-2">
-          <div className="text-lg font-bold text-slate-50">{insight.webBetterThan}%</div>
-          <div className="text-[10px] text-slate-400">web superada</div>
-        </div>
+        <Metric value={`#${insight.scoreRank}`} label="por score" />
+        <Metric value={`${insight.peers}`} label="comparables" />
+        <Metric value={`${insight.fitBetterThan}%`} label="encaje superado" />
       </div>
-      {(insight.bestReviews || insight.bestWeb) && (
+      {(insight.bestScore || insight.bestFit) && (
         <div className="mt-3 space-y-1 text-xs text-slate-400">
-          {insight.bestReviews && <p>🏆 Más reseñas: <span className="text-slate-200">{insight.bestReviews.name}</span> ({insight.bestReviews.signals.reviewsCount})</p>}
-          {insight.bestWeb && <p>🌐 Mejor web: <span className="text-slate-200">{insight.bestWeb.name}</span></p>}
+          {insight.bestScore && <p>Mejor score: <span className="text-slate-200">{insight.bestScore.name}</span> ({insight.bestScore.score})</p>}
+          {insight.bestFit && <p>Mejor encaje maquina/ticket: <span className="text-slate-200">{insight.bestFit.name}</span></p>}
         </div>
       )}
     </Card>
@@ -148,8 +120,13 @@ function CityCompetition({ lead }: { lead: Lead }) {
 }
 
 const METRIC_LABEL: Record<string, string> = {
-  performance: 'Velocidad', seo: 'SEO', ux: 'UX', branding: 'Branding',
-  conversion: 'Conversión', mobile: 'Móvil', trust: 'Confianza',
+  machineFit: 'Encaje maquina',
+  industrialNeed: 'Necesidad industrial',
+  productionScale: 'Escala productiva',
+  materialFit: 'Materiales',
+  budgetFit: 'Presupuesto',
+  urgency: 'Urgencia comercial',
+  contactability: 'Contactabilidad',
 }
 
 function FindingRow({ f }: { f: AuditFinding }) {
@@ -157,7 +134,7 @@ function FindingRow({ f }: { f: AuditFinding }) {
     <div className="rounded-xl border border-white/10 bg-white/[0.02] p-3">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-start gap-2">
-          <span className={`mt-0.5 ${STATUS_COLOR[f.status]}`}>{STATUS_ICON[f.status]}</span>
+          <span className={`mt-0.5 text-xs font-bold ${STATUS_COLOR[f.status]}`}>{STATUS_ICON[f.status]}</span>
           <p className="text-sm font-semibold text-slate-100">{f.title}</p>
         </div>
         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ring-1 ring-inset ${PRIORITY_STYLE[f.priority]}`}>
@@ -168,7 +145,7 @@ function FindingRow({ f }: { f: AuditFinding }) {
         <span className="font-semibold text-slate-300">Impacto:</span> {f.impact}
       </p>
       <p className="mt-1 text-xs text-emerald-300/90">
-        <span className="font-semibold">Solución:</span> {f.solution}
+        <span className="font-semibold">Accion:</span> {f.solution}
       </p>
     </div>
   )
@@ -177,19 +154,14 @@ function FindingRow({ f }: { f: AuditFinding }) {
 export function ScoreBreakdown({ lead }: { lead: Lead }) {
   return (
     <Card className="p-4">
-      <h4 className="mb-1 text-sm font-semibold text-slate-100">¿Por qué este score? ({lead.score}/100)</h4>
+      <h4 className="mb-1 text-sm font-semibold text-slate-100">Por que este score ({lead.score}/100)</h4>
       <p className="mb-3 text-xs text-slate-400">{lead.scoreHeadline}</p>
       <div className="space-y-1.5">
         {lead.scoreFactors.map((f) => (
           <div key={f.key} className="flex items-center gap-2 text-xs">
-            <span
-              className={`w-10 shrink-0 text-right font-bold ${f.points >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}
-            >
-              {f.points >= 0 ? '+' : ''}
-              {f.points}
-            </span>
+            <span className="w-10 shrink-0 text-right font-bold text-emerald-400">+{f.points}</span>
             <span className="font-medium text-slate-300">{f.label}</span>
-            <span className="truncate text-slate-500">— {f.detail}</span>
+            <span className="truncate text-slate-500">- {f.detail}</span>
           </div>
         ))}
       </div>
@@ -202,11 +174,9 @@ export function CompetitorCompare({ lead }: { lead: Lead }) {
   if (!dims) return null
   return (
     <Card className="p-4">
-      <h4 className="mb-1 text-sm font-semibold text-slate-100">
-        Comparación vs. una web de Vigolo
-      </h4>
+      <h4 className="mb-1 text-sm font-semibold text-slate-100">Madurez vs. objetivo comercial</h4>
       <p className="mb-3 text-xs text-slate-400">
-        Por qué una web moderna generaría mejores resultados que la actual.
+        Compara el lead contra el perfil ideal para avanzar con relevamiento tecnico y cotizacion.
       </p>
       <div className="space-y-3">
         {dims.map((d) => (
@@ -214,17 +184,26 @@ export function CompetitorCompare({ lead }: { lead: Lead }) {
             <div className="mb-1 flex justify-between text-xs">
               <span className="text-slate-400">{d.dimension}</span>
               <span className="text-slate-300">
-                <span className="text-rose-300">{d.theirs}</span> →{' '}
-                <span className="font-semibold text-emerald-300">{d.vigolo}</span>
+                <span className="text-amber-300">{d.theirs}</span> /{' '}
+                <span className="font-semibold text-emerald-300">{d.target}</span>
               </span>
             </div>
             <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/10">
-              <div className="absolute inset-y-0 left-0 rounded-full bg-rose-500/40" style={{ width: `${d.theirs}%` }} />
-              <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-400/80" style={{ width: `${d.vigolo}%`, mixBlendMode: 'screen' }} />
+              <div className="absolute inset-y-0 left-0 rounded-full bg-amber-500/50" style={{ width: `${d.theirs}%` }} />
+              <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-400/70" style={{ width: `${Math.min(d.target, d.theirs)}%`, mixBlendMode: 'screen' }} />
             </div>
           </div>
         ))}
       </div>
     </Card>
+  )
+}
+
+function Metric({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-lg bg-white/5 py-2">
+      <div className="text-lg font-bold text-slate-50">{value}</div>
+      <div className="text-[10px] text-slate-400">{label}</div>
+    </div>
   )
 }

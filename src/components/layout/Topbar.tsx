@@ -8,7 +8,7 @@ const MOBILE_NAV = [
   { to: '/', label: 'Inicio', end: true },
   { to: '/radar', label: 'Radar' },
   { to: '/prospeccion', label: 'Buscar' },
-  { to: '/campanas', label: 'Campañas' },
+  { to: '/campanas', label: 'Campanas' },
   { to: '/mapa', label: 'Mapa' },
   { to: '/crm', label: 'CRM' },
   { to: '/asesor', label: 'Asesor' },

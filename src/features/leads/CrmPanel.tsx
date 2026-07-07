@@ -11,7 +11,16 @@ const PRIORITY_STYLE: Record<string, string> = {
   media: 'bg-amber-500/15 text-amber-300 ring-amber-400/30',
   baja: 'bg-slate-500/15 text-slate-300 ring-slate-400/30',
 }
-const SUGGESTED_TAGS = ['caliente', 'llamar', 'turnos', 'e-commerce', 'rediseño', 'seguir', 'turístico']
+const SUGGESTED_TAGS = [
+  'alta-inversion',
+  'fibra',
+  'co2',
+  'grabadora-fibra',
+  'financiacion',
+  'visita-tecnica',
+  'produccion',
+  'terceriza-corte',
+]
 
 export function CrmPanel({ lead }: { lead: Lead }) {
   const { setStage, setPriority, toggleTag, addTask, toggleTask, removeTask, updateLead, addNote, addReminder, toggleReminder } = useLeadStore()
@@ -65,7 +74,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
         <div className="mb-2 flex flex-wrap gap-1.5">
           {lead.tags.map((t) => (
             <button key={t} onClick={() => toggleTag(lead.id, t)} className="inline-flex items-center gap-1 rounded-full bg-electric-500/15 px-2.5 py-0.5 text-xs font-semibold text-electric-300 ring-1 ring-inset ring-electric-400/30 hover:bg-electric-500/25">
-              #{t} ✕
+              #{t} x
             </button>
           ))}
           {lead.tags.length === 0 && <span className="text-xs text-slate-500">Sin etiquetas.</span>}
@@ -80,7 +89,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
             onSubmit={(e) => { e.preventDefault(); if (tagText.trim()) { toggleTag(lead.id, tagText.trim().toLowerCase()); setTagText('') } }}
             className="inline-flex"
           >
-            <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="nueva…" className="w-24 rounded-full border border-white/10 bg-base-950/60 px-2.5 py-0.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none" />
+            <input value={tagText} onChange={(e) => setTagText(e.target.value)} placeholder="nueva..." className="w-24 rounded-full border border-white/10 bg-base-950/60 px-2.5 py-0.5 text-xs text-slate-100 placeholder:text-slate-500 focus:outline-none" />
           </form>
         </div>
       </Card>
@@ -95,7 +104,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
               <input type="checkbox" checked={t.done} onChange={() => toggleTask(lead.id, t.id)} className="accent-electric-400" />
               <span className={cn('flex-1', t.done && 'text-slate-500 line-through')}>{t.text}</span>
               {t.dueDate && <span className="text-xs text-slate-500">{formatDate(t.dueDate)}</span>}
-              <button onClick={() => removeTask(lead.id, t.id)} className="text-slate-600 hover:text-rose-400">✕</button>
+              <button onClick={() => removeTask(lead.id, t.id)} className="text-slate-600 hover:text-rose-400">x</button>
             </div>
           ))}
         </div>
@@ -103,7 +112,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
           onSubmit={(e) => { e.preventDefault(); if (taskText.trim()) { addTask(lead.id, taskText.trim()); setTaskText('') } }}
           className="mt-3 flex gap-2"
         >
-          <Input placeholder="Nueva tarea…" value={taskText} onChange={(e) => setTaskText(e.target.value)} />
+          <Input placeholder="Nueva tarea..." value={taskText} onChange={(e) => setTaskText(e.target.value)} />
           <Button size="sm" type="submit">+</Button>
         </form>
       </Card>
@@ -129,7 +138,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
               className="w-full accent-electric-400"
             />
           </Field>
-          <Field label="Último contacto">
+          <Field label="Ultimo contacto">
             <Input
               type="date"
               value={lead.lastContactDate ?? ''}
@@ -137,7 +146,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
               className="[color-scheme:dark]"
             />
           </Field>
-          <Field label="Próximo seguimiento">
+          <Field label="Proximo seguimiento">
             <Input
               type="date"
               value={lead.nextFollowUpDate ?? ''}
@@ -153,7 +162,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
             onChange={(e) => updateLead(lead.id, { proposalSent: e.target.checked })}
             className="accent-electric-400"
           />
-          Presupuesto / propuesta enviada
+          Cotizacion tecnico-comercial enviada
         </label>
       </Card>
 
@@ -172,7 +181,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
         </div>
         <div className="mt-3 flex gap-2">
           <Input type="date" value={remDate} onChange={(e) => setRemDate(e.target.value)} className="[color-scheme:dark] max-w-[150px]" />
-          <Input placeholder="Recordatorio…" value={remText} onChange={(e) => setRemText(e.target.value)} />
+          <Input placeholder="Recordatorio..." value={remText} onChange={(e) => setRemText(e.target.value)} />
           <Button
             size="sm"
             onClick={() => {
@@ -193,7 +202,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
         <h4 className="mb-3 text-sm font-semibold text-slate-100">Notas e historial</h4>
         <div className="flex gap-2">
           <Input
-            placeholder="Agregar nota…"
+            placeholder="Agregar nota..."
             value={note}
             onChange={(e) => setNote(e.target.value)}
             onKeyDown={(e) => {
@@ -216,7 +225,7 @@ export function CrmPanel({ lead }: { lead: Lead }) {
           </Button>
         </div>
         <ul className="mt-3 space-y-2">
-          {lead.events.length === 0 && <li className="text-xs text-slate-500">Sin actividad todavía.</li>}
+          {lead.events.length === 0 && <li className="text-xs text-slate-500">Sin actividad todavia.</li>}
           {lead.events.map((ev) => (
             <li key={ev.id} className="flex gap-2 text-xs">
               <span className="mt-0.5 text-slate-600">{ICON[ev.type]}</span>
@@ -232,4 +241,4 @@ export function CrmPanel({ lead }: { lead: Lead }) {
   )
 }
 
-const ICON: Record<string, string> = { nota: '📝', contacto: '📞', estado: '🔀', sistema: '✦' }
+const ICON: Record<string, string> = { nota: 'N', contacto: 'C', estado: 'E', sistema: 'S' }
