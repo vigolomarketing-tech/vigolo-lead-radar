@@ -1,5 +1,5 @@
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, MachineFitBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, MachineFitBadge, StageBadge, UrgencyBadge } from '../../components/ui/badges'
 import { Card } from '../../components/ui/primitives'
 import { formatCurrency } from '../../lib/format'
 import { useLeadStore } from '../../store/useLeadStore'
@@ -23,6 +23,7 @@ export function LeadCard({ lead }: { lead: Lead }) {
 
         <div className="flex flex-wrap gap-1.5">
           <OpportunityBadge score={lead.score} />
+          <UrgencyBadge level={lead.urgency.level} title={lead.urgency.reason} />
           <MachineFitBadge fit={lead.machineFit} />
           <StageBadge stage={lead.stage} />
           {lead.analysis && (
@@ -35,6 +36,12 @@ export function LeadCard({ lead }: { lead: Lead }) {
         {lead.machines[0] && (
           <p className="truncate rounded-lg bg-electric-500/10 px-2 py-1 text-xs text-electric-200 ring-1 ring-inset ring-electric-400/20">
             🛠️ {lead.machines[0].name}
+          </p>
+        )}
+
+        {lead.reasonToBuy && (
+          <p className="line-clamp-2 text-xs leading-relaxed text-slate-400">
+            💡 {lead.reasonToBuy}
           </p>
         )}
 

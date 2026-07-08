@@ -3,13 +3,15 @@ import { AppShell } from '../../components/layout/AppShell'
 import { Field, Input, Select, EmptyState } from '../../components/ui/primitives'
 import { ExportMenu } from '../../components/leads/ExportMenu'
 import { VirtualLeadGrid } from '../../components/leads/VirtualLeadGrid'
+import { LeadTable } from '../../components/leads/LeadTable'
 import { SearchFilters } from './SearchFilters'
 import { useFilteredLeads, useCategories, useProvinces } from '../../hooks/useFilteredLeads'
 import { useLeadStore } from '../../store/useLeadStore'
-import { CRM_STAGE_LABEL, CRM_STAGE_ORDER, OPPORTUNITY_LABEL } from '../../lib/labels'
+import { CRM_STAGE_LABEL, CRM_STAGE_ORDER, OPPORTUNITY_LABEL, URGENCY_LABEL } from '../../lib/labels'
 import { SEARCH_PROMPTS } from '../../config/machines'
 import { parseCommand } from '../../lib/commandParser'
-import type { CrmStage, OpportunityLevel, Priority } from '../../types'
+import { cn } from '../../utils/cn'
+import type { CrmStage, OpportunityLevel, Priority, UrgencyLevel } from '../../types'
 
 export function ProspectingPage() {
   const filtered = useFilteredLeads()
@@ -17,6 +19,7 @@ export function ProspectingPage() {
   const provinces = useProvinces()
   const { filters, setFilters, resetFilters } = useLeadStore()
   const [feedback, setFeedback] = useState<string | null>(null)
+  const [view, setView] = useState<'tabla' | 'cards'>('tabla')
 
   const applyPrompt = (prompt: string) => {
     const cmd = parseCommand(prompt)
@@ -57,7 +60,7 @@ export function ProspectingPage() {
       {/* Filtros avanzados */}
       <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid flex-1 gap-3 sm:grid-cols-2 lg:grid-cols-6">
             <Field label="Buscar por nombre">
               <Input value={filters.query} onChange={(e) => setFilters({ query: e.target.value })} placeholder="Nombre…" />
             </Field>
@@ -77,6 +80,12 @@ export function ProspectingPage() {
               <Select value={filters.opportunity} onChange={(e) => setFilters({ opportunity: e.target.value as OpportunityLevel | '' })}>
                 <option value="">Todas</option>
                 {(['alta', 'media', 'baja'] as const).map((o) => <option key={o} value={o}>{OPPORTUNITY_LABEL[o]}</option>)}
+              </Select>
+            </Field>
+            <Field label="Urgencia">
+              <Select value={filters.urgency} onChange={(e) => setFilters({ urgency: e.target.value as UrgencyLevel | '' })}>
+                <option value="">Todas</option>
+                {(['alta', 'media', 'baja'] as const).map((u) => <option key={u} value={u}>{URGENCY_LABEL[u]}</option>)}
               </Select>
             </Field>
             <Field label="Estado / Prioridad">
@@ -99,10 +108,31 @@ export function ProspectingPage() {
         </div>
       </div>
 
-      <p className="text-sm text-slate-400">{filtered.length} empresas</p>
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-sm text-slate-400">
+          <span className="font-semibold text-slate-200">{filtered.length}</span> empresas ·{' '}
+          <span className="text-rose-300">{filtered.filter((l) => l.urgency.level === 'alta').length}</span> urgentes
+        </p>
+        <div className="flex gap-1 rounded-lg bg-white/5 p-1 ring-1 ring-inset ring-white/10">
+          {(['tabla', 'cards'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setView(v)}
+              className={cn(
+                'rounded-md px-3 py-1 text-xs font-semibold capitalize transition-colors',
+                view === v ? 'bg-electric-500 text-white' : 'text-slate-300 hover:text-white',
+              )}
+            >
+              {v === 'tabla' ? '☰ Tabla' : '▦ Cards'}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {filtered.length === 0 ? (
         <EmptyState title="Sin resultados" subtitle="Ajustá los filtros o hacé un nuevo sondeo." />
+      ) : view === 'tabla' ? (
+        <LeadTable leads={filtered} />
       ) : (
         <VirtualLeadGrid leads={filtered} />
       )}

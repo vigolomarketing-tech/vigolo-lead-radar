@@ -3,7 +3,7 @@
 // PDF/Excel pesados se generan bajo demanda.
 // =====================================================================
 
-import { CRM_STAGE_LABEL, MACHINE_FIT_LABEL } from '../lib/labels'
+import { CRM_STAGE_LABEL, MACHINE_FIT_LABEL, URGENCY_LABEL } from '../lib/labels'
 import type { Lead } from '../types'
 
 function triggerDownload(blob: Blob, filename: string): void {
@@ -20,8 +20,8 @@ function triggerDownload(blob: Blob, filename: string): void {
 const HEADERS = [
   'Nombre', 'Rubro', 'Provincia', 'Ciudad', 'Dirección', 'Teléfono', 'WhatsApp',
   'Email', 'Sitio web', 'Instagram', 'Ajuste rubro', 'Máquina sugerida',
-  'Score', 'Nivel', 'Estado CRM', 'Ticket potencial (ARS)', 'Prob. cierre %',
-  'Reseñas', 'Rating', 'Motivo', 'Notas', 'Último contacto', 'Próximo seguimiento', 'Maps',
+  'Score', 'Nivel', 'Urgencia', 'Razón de compra', 'Estado CRM', 'Ticket potencial (ARS)',
+  'Prob. cierre %', 'Reseñas', 'Rating', 'Notas', 'Último contacto', 'Próximo seguimiento', 'Maps',
 ]
 
 function row(l: Lead): (string | number)[] {
@@ -30,8 +30,9 @@ function row(l: Lead): (string | number)[] {
     l.signals.phone ?? '', l.signals.whatsapp ?? '', l.signals.email ?? '',
     l.signals.website ?? '', l.signals.instagram ?? '',
     MACHINE_FIT_LABEL[l.machineFit], l.machines[0]?.name ?? '',
-    l.score, l.scoreLevel, CRM_STAGE_LABEL[l.stage], l.potentialValue, l.closeProbability,
-    l.signals.reviewsCount ?? 0, l.signals.rating ?? '', l.scoreHeadline, l.notes,
+    l.score, l.scoreLevel, URGENCY_LABEL[l.urgency.level], l.reasonToBuy,
+    CRM_STAGE_LABEL[l.stage], l.potentialValue, l.closeProbability,
+    l.signals.reviewsCount ?? 0, l.signals.rating ?? '', l.notes,
     l.lastContactDate ?? '', l.nextFollowUpDate ?? '', l.mapsUrl ?? '',
   ]
 }

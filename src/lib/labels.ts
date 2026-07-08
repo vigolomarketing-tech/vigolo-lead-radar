@@ -2,7 +2,26 @@ import type {
   CrmStage,
   MachineFit,
   OpportunityLevel,
+  UrgencyLevel,
 } from '../types'
+
+export const URGENCY_LABEL: Record<UrgencyLevel, string> = {
+  alta: 'Urgencia alta',
+  media: 'Urgencia media',
+  baja: 'Urgencia baja',
+}
+
+export const URGENCY_STYLE: Record<UrgencyLevel, string> = {
+  alta: 'bg-rose-500/15 text-rose-300 ring-rose-400/30',
+  media: 'bg-amber-500/15 text-amber-300 ring-amber-400/30',
+  baja: 'bg-slate-500/15 text-slate-300 ring-slate-400/30',
+}
+
+export const URGENCY_ICON: Record<UrgencyLevel, string> = {
+  alta: '🔥',
+  media: '⚡',
+  baja: '💤',
+}
 
 export const MACHINE_FIT_LABEL: Record<MachineFit, string> = {
   ideal: 'Rubro ideal',

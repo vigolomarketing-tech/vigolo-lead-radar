@@ -32,6 +32,7 @@ const EMPTY_FILTERS: LeadFiltersState = {
   city: '',
   zone: '',
   opportunity: '',
+  urgency: '',
   stage: '',
   priority: '',
 }

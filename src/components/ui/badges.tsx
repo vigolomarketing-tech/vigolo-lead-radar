@@ -7,8 +7,11 @@ import {
   MACHINE_FIT_STYLE,
   OPPORTUNITY_LABEL,
   OPPORTUNITY_STYLE,
+  URGENCY_ICON,
+  URGENCY_LABEL,
+  URGENCY_STYLE,
 } from '../../lib/labels'
-import type { CrmStage, MachineFit, Priority } from '../../types'
+import type { CrmStage, MachineFit, Priority, UrgencyLevel } from '../../types'
 
 const PRIORITY_STYLE: Record<Priority, string> = {
   alta: 'bg-rose-500/15 text-rose-300 ring-rose-400/30',
@@ -27,6 +30,14 @@ export function OpportunityBadge({ score }: { score: number }) {
 
 export function MachineFitBadge({ fit }: { fit: MachineFit }) {
   return <Badge className={MACHINE_FIT_STYLE[fit]}>{MACHINE_FIT_LABEL[fit]}</Badge>
+}
+
+export function UrgencyBadge({ level, title }: { level: UrgencyLevel; title?: string }) {
+  return (
+    <Badge className={URGENCY_STYLE[level]} title={title}>
+      {URGENCY_ICON[level]} {URGENCY_LABEL[level]}
+    </Badge>
+  )
 }
 
 export function StageBadge({ stage }: { stage: CrmStage }) {

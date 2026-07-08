@@ -47,8 +47,8 @@ export function DashboardPage() {
       {/* KPI principal */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         <Kpi label="Leads totales" value={formatNumber(stats.total)} accent="text-electric-300" icon="◧" />
-        <Kpi label="Analizados" value={formatNumber(stats.analyzed)} accent="text-violet-300" icon="✦" />
-        <Kpi label="Oportunidades altas" value={formatNumber(stats.highOpportunity)} accent="text-emerald-300" icon="🔥" />
+        <Kpi label="Urgencia alta" value={formatNumber(leads.filter((l) => l.urgency.level === 'alta').length)} accent="text-rose-300" icon="🔥" />
+        <Kpi label="Oportunidades altas" value={formatNumber(stats.highOpportunity)} accent="text-emerald-300" icon="⭐" />
         <Kpi label="Contactados" value={formatNumber(stats.contacted)} accent="text-cyan-300" icon="💬" />
         <Kpi label="Interesados" value={formatNumber(stats.interested)} accent="text-fuchsia-300" icon="⭐" />
         <Kpi label="Ganados" value={formatNumber(stats.won)} accent="text-emerald-300" icon="✓" />

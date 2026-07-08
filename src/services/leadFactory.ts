@@ -6,6 +6,7 @@
 
 import { DEFAULT_TICKET } from '../config/app'
 import { computeScore } from '../lib/scoring'
+import { estimateUrgency, reasonToBuy } from '../services/ai/companyIntel'
 import { slugify, uid } from '../lib/id'
 import type { BusinessSignals, CrmStage, GeoLocation, Lead, Priority } from '../types'
 
@@ -64,7 +65,7 @@ export function buildLead(raw: RawBusiness, createdAt = '2026-07-01'): Lead {
   const potentialValue =
     raw.potentialValue ?? Math.round((baseTicket * (0.9 + (scoring.score / 100) * 0.5)) / 1000) * 1000
 
-  return {
+  const lead: Lead = {
     id: slugify(`${raw.name}-${raw.city ?? raw.zone}`),
     name: raw.name,
     category: raw.category,
@@ -87,6 +88,8 @@ export function buildLead(raw: RawBusiness, createdAt = '2026-07-01'): Lead {
     machines: scoring.machines,
     scoreHeadline: scoring.headline,
     scoreFactors: scoring.factors,
+    reasonToBuy: '',
+    urgency: { level: 'baja', reason: '' },
     stage,
     priority: raw.priority ?? priorityFromScore(scoring.score),
     tags: raw.tags ?? [],
@@ -104,4 +107,9 @@ export function buildLead(raw: RawBusiness, createdAt = '2026-07-01'): Lead {
     createdAt,
     source: raw.source ?? 'mock',
   }
+
+  // Inteligencia comercial (específica por empresa).
+  lead.reasonToBuy = reasonToBuy(lead)
+  lead.urgency = estimateUrgency(lead)
+  return lead
 }

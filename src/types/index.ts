@@ -32,6 +32,52 @@ export interface MachineMatch {
   reason: string
 }
 
+/** Nivel de urgencia comercial del lead. */
+export type UrgencyLevel = 'alta' | 'media' | 'baja'
+
+export interface Urgency {
+  level: UrgencyLevel
+  reason: string
+}
+
+/** ROI estimado de incorporar la máquina. */
+export interface RoiEstimate {
+  /** Gasto mensual estimado en tercerización / costo evitable (ARS). */
+  monthlySaving: number
+  /** Meses aproximados de repago. */
+  paybackMonths: number
+  note: string
+}
+
+/**
+ * Inteligencia inferida de la empresa a partir de su rubro + señales.
+ * Análisis específico (no genérico) para calificar y abordar el lead.
+ */
+export interface CompanyIntel {
+  fabricates: string // qué fabrica / a qué se dedica
+  materials: string[] // materiales que usa
+  processes: string[] // procesos que realiza
+  productionType: string // tipo de producción (unitaria, serie, lote…)
+  likelyMachinery: string[] // maquinaria que probablemente ya usa
+  opportunities: string[] // oportunidades de mejora detectadas
+  recommendedMachine?: MachineMatch
+  whyThisMachine: string // por qué esa máquina
+  reasonToBuy: string // razón de compra específica
+  urgency: Urgency
+  roi: RoiEstimate
+  sizeLabel: string // tamaño estimado (Pyme, mediana, grande…)
+}
+
+/** Playbook comercial generado para un lead. */
+export interface CommercialStrategy {
+  benefits: string[]
+  arguments: string[]
+  objections: { objection: string; response: string }[]
+  callScript: string
+  roi: RoiEstimate
+  messages: GeneratedMessage[]
+}
+
 /** Pipeline comercial estilo HubSpot. */
 export type CrmStage =
   | 'nuevo'
@@ -188,6 +234,10 @@ export interface Lead {
   machines: MachineMatch[]
   scoreHeadline: string
   scoreFactors: ScoreFactor[]
+  /** Razón de compra específica (por qué necesitaría la máquina). */
+  reasonToBuy: string
+  /** Nivel de urgencia comercial + explicación. */
+  urgency: Urgency
 
   // Análisis IA (opcional hasta que se ejecute "Analizar")
   analysis?: AnalysisReport
@@ -243,6 +293,7 @@ export interface LeadFiltersState {
   city: string
   zone: string
   opportunity: OpportunityLevel | ''
+  urgency: UrgencyLevel | ''
   stage: CrmStage | ''
   priority: Priority | ''
 }

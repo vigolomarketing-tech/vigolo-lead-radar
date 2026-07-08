@@ -1,22 +1,23 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Drawer } from '../../components/ui/Drawer'
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, MachineFitBadge, PriorityBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, MachineFitBadge, PriorityBadge, StageBadge, UrgencyBadge } from '../../components/ui/badges'
 import { formatCurrency } from '../../lib/format'
 import { Button } from '../../components/ui/primitives'
 import { AnalysisPanel } from '../analysis/AnalysisPanel'
-import { MessagesPanel } from '../messages/MessagesPanel'
+import { StrategyPanel } from '../strategy/StrategyPanel'
 import { CrmPanel } from './CrmPanel'
 import { useLeadStore } from '../../store/useLeadStore'
 import { generateDemoHtml, openDemo } from '../../services/demo/generateDemo'
 import { cn } from '../../utils/cn'
 import type { Lead } from '../../types'
 
-type Tab = 'resumen' | 'analisis' | 'mensajes' | 'crm'
+type Tab = 'resumen' | 'analisis' | 'estrategia' | 'crm'
 const TABS: { id: Tab; label: string }[] = [
   { id: 'resumen', label: 'Resumen' },
   { id: 'analisis', label: 'Análisis IA' },
-  { id: 'mensajes', label: 'Mensajes' },
+  { id: 'estrategia', label: 'Estrategia' },
   { id: 'crm', label: 'CRM' },
 ]
 
@@ -35,11 +36,30 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   const [tab, setTab] = useState<Tab>('resumen')
   const removeLead = useLeadStore((s) => s.removeLead)
   const addDemo = useLeadStore((s) => s.addDemo)
+  const setFilters = useLeadStore((s) => s.setFilters)
+  const select = useLeadStore((s) => s.select)
+  const navigate = useNavigate()
 
   const createDemo = () => {
     const html = generateDemoHtml(lead)
     addDemo({ leadId: lead.id, leadName: lead.name, html })
     openDemo(html)
+  }
+
+  const findSimilar = () => {
+    setFilters({
+      query: '',
+      category: lead.category,
+      province: '',
+      city: '',
+      zone: '',
+      opportunity: '',
+      urgency: '',
+      stage: '',
+      priority: '',
+    })
+    select(null)
+    navigate('/prospeccion')
   }
 
   return (
@@ -54,6 +74,7 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
               <p className="text-sm text-slate-400">{lead.category} · {lead.city}, {lead.province}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <OpportunityBadge score={lead.score} />
+                <UrgencyBadge level={lead.urgency.level} title={lead.urgency.reason} />
                 <MachineFitBadge fit={lead.machineFit} />
                 <StageBadge stage={lead.stage} />
                 <PriorityBadge priority={lead.priority} />
@@ -84,14 +105,14 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
 
       {/* Content */}
       <div className="flex-1 space-y-4 p-5">
-        {tab === 'resumen' && <Overview lead={lead} />}
+        {tab === 'resumen' && <Overview lead={lead} onFindSimilar={findSimilar} />}
         {tab === 'analisis' && <AnalysisPanel lead={lead} />}
-        {tab === 'mensajes' && <MessagesPanel lead={lead} />}
+        {tab === 'estrategia' && <StrategyPanel lead={lead} />}
         {tab === 'crm' && <CrmPanel lead={lead} />}
       </div>
 
       {/* Footer */}
-      <div className="sticky bottom-0 flex items-center justify-between gap-2 border-t border-white/10 bg-base-950/90 p-4 backdrop-blur">
+      <div className="sticky bottom-0 flex flex-wrap items-center justify-between gap-2 border-t border-white/10 bg-base-950/90 p-4 backdrop-blur">
         <Button
           variant="danger"
           size="sm"
@@ -101,12 +122,15 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         >
           Eliminar
         </Button>
-        <div className="flex gap-2">
-          <Button variant="success" size="sm" onClick={createDemo} title="Generar una propuesta / ficha de la máquina para enviar al cliente">
-            ✨ Crear propuesta
+        <div className="flex flex-wrap gap-2">
+          <Button variant="ghost" size="sm" onClick={findSimilar} title="Ver empresas del mismo rubro">
+            🔎 Similares
           </Button>
-          <Button variant="secondary" size="sm" onClick={onClose}>
-            Cerrar
+          <Button variant="success" size="sm" onClick={createDemo} title="Generar una propuesta / ficha de la máquina para enviar al cliente">
+            ✨ Propuesta
+          </Button>
+          <Button size="sm" onClick={() => setTab('estrategia')} title="Preparar la estrategia comercial">
+            🎯 Estrategia
           </Button>
         </div>
       </div>
@@ -114,7 +138,7 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
   )
 }
 
-function Overview({ lead }: { lead: Lead }) {
+function Overview({ lead, onFindSimilar }: { lead: Lead; onFindSimilar: () => void }) {
   const rows: [string, string | undefined, string?][] = [
     ['Provincia', lead.province],
     ['Ciudad', lead.city],
@@ -132,8 +156,21 @@ function Overview({ lead }: { lead: Lead }) {
   ]
   return (
     <div className="space-y-4">
+      {/* Razón de compra + urgencia (lo primero que ve el vendedor) */}
+      <div className="rounded-2xl border border-electric-400/20 bg-electric-500/[0.06] p-4">
+        <div className="mb-1 flex items-center justify-between gap-2">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-electric-300">Razón de compra</h4>
+          <UrgencyBadge level={lead.urgency.level} />
+        </div>
+        <p className="text-sm leading-relaxed text-slate-200">{lead.reasonToBuy}</p>
+        <p className="mt-2 text-xs text-slate-400"><span className="font-semibold text-amber-300">Urgencia:</span> {lead.urgency.reason}</p>
+      </div>
+
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Datos del negocio</h4>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Datos de la empresa</h4>
+          <button onClick={onFindSimilar} className="text-xs font-semibold text-electric-300 hover:underline">🔎 Ver similares</button>
+        </div>
         <dl className="space-y-2 text-sm">
           {rows.filter(([, v]) => v).map(([label, value, href]) => (
             <div key={label} className="flex items-baseline justify-between gap-3">

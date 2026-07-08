@@ -1,9 +1,12 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button, Card, ProgressBar } from '../../components/ui/primitives'
 import { Spinner } from '../../components/ui/primitives'
+import { UrgencyBadge } from '../../components/ui/badges'
 import { useLeadStore } from '../../store/useLeadStore'
 import { generateAuditPdf } from '../../services/audit/pdf'
+import { analyzeCompany } from '../../services/ai/companyIntel'
 import { analyzeCompetition } from '../../lib/competition'
+import { formatCurrency } from '../../lib/format'
 import type { AuditFinding, Lead } from '../../types'
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -37,6 +40,7 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
   if (!report) {
     return (
       <div className="space-y-4">
+        <IntelCard lead={lead} />
         <ScoreBreakdown lead={lead} />
         <Card className="p-6 text-center">
           <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-violet-500/15 text-2xl text-violet-300">
@@ -65,6 +69,8 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
 
   return (
     <div className="space-y-4">
+      <IntelCard lead={lead} />
+
       {/* Resumen */}
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
@@ -173,6 +179,77 @@ function FindingRow({ f }: { f: AuditFinding }) {
         <span className="font-semibold">Solución:</span> {f.solution}
       </p>
     </div>
+  )
+}
+
+function Chips({ items, tone = 'slate' }: { items: string[]; tone?: 'slate' | 'blue' }) {
+  const cls =
+    tone === 'blue'
+      ? 'bg-electric-500/10 text-electric-200 ring-electric-400/20'
+      : 'bg-white/5 text-slate-300 ring-white/10'
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {items.map((i) => (
+        <span key={i} className={`rounded-full px-2 py-0.5 text-xs ring-1 ring-inset ${cls}`}>{i}</span>
+      ))}
+    </div>
+  )
+}
+
+function IntelRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="grid grid-cols-[110px_1fr] items-start gap-3 py-1.5">
+      <dt className="text-xs font-medium text-slate-500">{label}</dt>
+      <dd className="min-w-0 text-sm text-slate-200">{children}</dd>
+    </div>
+  )
+}
+
+/** Análisis específico de la empresa (qué fabrica, materiales, procesos…). */
+export function IntelCard({ lead }: { lead: Lead }) {
+  const intel = useMemo(() => analyzeCompany(lead), [lead])
+  return (
+    <Card className="p-4">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h4 className="text-sm font-semibold text-slate-100">🧠 Inteligencia de la empresa</h4>
+        <UrgencyBadge level={intel.urgency.level} />
+      </div>
+
+      <div className="mb-3 rounded-xl border border-electric-400/20 bg-electric-500/[0.06] p-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-electric-300">Razón de compra</p>
+        <p className="mt-1 text-sm leading-relaxed text-slate-200">{intel.reasonToBuy}</p>
+      </div>
+
+      <dl className="divide-y divide-white/5">
+        <IntelRow label="Tamaño">{intel.sizeLabel}</IntelRow>
+        <IntelRow label="Qué fabrica">{intel.fabricates}</IntelRow>
+        <IntelRow label="Materiales"><Chips items={intel.materials} /></IntelRow>
+        <IntelRow label="Procesos"><Chips items={intel.processes} /></IntelRow>
+        <IntelRow label="Producción">{intel.productionType}</IntelRow>
+        <IntelRow label="Maquinaria hoy"><Chips items={intel.likelyMachinery} /></IntelRow>
+        <IntelRow label="Mejoras">
+          <ul className="space-y-0.5">
+            {intel.opportunities.map((o) => (
+              <li key={o} className="text-sm text-slate-300">• {o}</li>
+            ))}
+          </ul>
+        </IntelRow>
+        <IntelRow label="Máquina ideal">
+          <span className="font-semibold text-electric-200">{intel.recommendedMachine?.name ?? '—'}</span>
+          <p className="mt-0.5 text-xs text-slate-400">{intel.whyThisMachine}</p>
+        </IntelRow>
+      </dl>
+
+      <div className="mt-3 rounded-lg bg-white/5 p-3">
+        <p className="text-xs text-slate-400">
+          <span className="font-semibold text-emerald-300">ROI:</span>{' '}
+          Ahorro estimado {formatCurrency(intel.roi.monthlySaving)}/mes · repago ~{intel.roi.paybackMonths} meses.
+        </p>
+        <p className="mt-1 text-xs text-slate-400">
+          <span className="font-semibold text-amber-300">Urgencia:</span> {intel.urgency.reason}
+        </p>
+      </div>
+    </Card>
   )
 }
 

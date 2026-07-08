@@ -18,6 +18,7 @@ export function useFilteredLeads(): Lead[] {
         if (filters.zone && l.zone !== filters.zone) return false
         if (filters.opportunity && levelFromScore(l.score) !== filters.opportunity)
           return false
+        if (filters.urgency && l.urgency.level !== filters.urgency) return false
         if (filters.stage && l.stage !== filters.stage) return false
         if (filters.priority && l.priority !== filters.priority) return false
         return true
