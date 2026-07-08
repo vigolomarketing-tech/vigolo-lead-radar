@@ -1,6 +1,6 @@
 // =====================================================================
-// Generador de Auditoría PDF profesional (jsPDF)
-// Identidad visual de Vigolo Web Studio. Listo para enviar al cliente.
+// Generador de Análisis de Oportunidad en PDF (jsPDF)
+// Identidad visual de 2GTech3D. Informe interno para el vendedor.
 // Se importa dinámicamente (code-splitting) para no pesar el bundle.
 // =====================================================================
 
@@ -43,8 +43,8 @@ export async function generateAuditPdf(lead: Lead): Promise<void> {
   doc.text(APP.agency.name.toUpperCase(), M, 90)
 
   doc.setTextColor('#ffffff')
-  doc.setFontSize(34)
-  doc.text('Auditoría Digital', M, H / 2 - 40)
+  doc.setFontSize(30)
+  doc.text('Análisis de Oportunidad', M, H / 2 - 40)
   doc.setTextColor(BLUE)
   doc.text(lead.name, M, H / 2)
 
@@ -94,18 +94,19 @@ export async function generateAuditPdf(lead: Lead): Promise<void> {
     }
   }
 
-  // Datos del negocio
-  heading('Datos del negocio')
+  // Datos de la empresa
+  heading('Datos de la empresa')
   paragraph(
     [
-      `Negocio: ${lead.name}`,
+      `Empresa: ${lead.name}`,
       `Rubro: ${lead.category}`,
-      `Zona: ${lead.zone}`,
+      `Ubicación: ${lead.city}, ${lead.province}`,
       `Dirección: ${lead.address}`,
       `Teléfono: ${lead.signals.phone ?? lead.signals.whatsapp ?? '—'}`,
-      `Sitio web: ${lead.signals.website ?? 'No tiene'}`,
+      `Sitio web: ${lead.signals.website ?? '—'}`,
       `Instagram: ${lead.signals.instagram ?? '—'}`,
       `Reseñas Google: ${lead.signals.reviewsCount ?? 0}  ·  Rating: ${lead.signals.rating?.toFixed(1) ?? '—'}★`,
+      `Máquina recomendada: ${lead.machines[0]?.name ?? '—'}`,
     ].join('\n'),
   )
 
@@ -114,13 +115,13 @@ export async function generateAuditPdf(lead: Lead): Promise<void> {
   heading('Resumen ejecutivo')
   paragraph(report.summary)
 
-  // Problemas encontrados (tabla)
+  // Señales de oportunidad (tabla)
   ensureSpace(60)
-  heading('Problemas encontrados')
+  heading('Señales de oportunidad')
   const { default: autoTable } = await import('jspdf-autotable')
   autoTable(doc, {
     startY: y,
-    head: [['Prioridad', 'Problema', 'Impacto']],
+    head: [['Prioridad', 'Señal', 'Por qué le conviene']],
     body: report.findings.map((f) => [
       f.priority.toUpperCase(),
       f.title,
@@ -158,24 +159,24 @@ export async function generateAuditPdf(lead: Lead): Promise<void> {
     paragraph(f.solution)
   })
 
-  // Beneficios de mejorar
+  // Beneficios de la máquina
   ensureSpace(80)
-  heading('Beneficios de una web profesional')
+  heading('Beneficios de incorporar la máquina')
   paragraph(
-    'Más consultas por WhatsApp, mejor posicionamiento en Google, imagen profesional que permite cobrar más, y capacidad de medir y escalar con campañas. Una web moderna convierte la demanda que hoy se pierde en clientes reales.',
+    'Producción propia sin depender de terceros, menor costo por pieza, mayor precisión y terminación, capacidad de tomar más y mejores trabajos, y nuevas líneas de productos personalizados. La máquina se amortiza dejando de tercerizar y suma capacidad instalada.',
   )
 
   // Conclusión
   ensureSpace(80)
   heading('Conclusión')
   paragraph(
-    `${lead.name} tiene una oportunidad clara de crecimiento digital. Con una inversión estimada de ${formatCurrency(lead.potentialValue)}, ${APP.agency.name} puede resolver los puntos detectados y transformar su presencia online en una máquina de captar clientes.`,
+    `${lead.name} tiene una oportunidad clara de mejorar su producción. Con una inversión estimada de ${formatCurrency(lead.potentialValue)} en la ${lead.machines[0]?.name ?? 'máquina recomendada'}, ${APP.agency.name} le aporta el equipo, la garantía propia, la puesta en marcha y el asesoramiento técnico para producir en casa.`,
   )
 
   // Pie
   doc.setFontSize(9)
   doc.setTextColor(GRAY)
-  doc.text(`${APP.agency.name}  ·  Auditoría digital  ·  ${lead.name}`, M, H - 24)
+  doc.text(`${APP.agency.name}  ·  Análisis de oportunidad  ·  ${lead.name}`, M, H - 24)
 
-  doc.save(`auditoria-${lead.id}.pdf`)
+  doc.save(`oportunidad-${lead.id}.pdf`)
 }

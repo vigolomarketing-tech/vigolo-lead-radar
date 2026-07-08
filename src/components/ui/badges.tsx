@@ -3,12 +3,12 @@ import { levelFromScore } from '../../lib/scoring'
 import {
   CRM_STAGE_LABEL,
   CRM_STAGE_STYLE,
-  DIGITAL_PRESENCE_LABEL,
-  DIGITAL_PRESENCE_STYLE,
+  MACHINE_FIT_LABEL,
+  MACHINE_FIT_STYLE,
   OPPORTUNITY_LABEL,
   OPPORTUNITY_STYLE,
 } from '../../lib/labels'
-import type { CrmStage, DigitalPresence, Priority } from '../../types'
+import type { CrmStage, MachineFit, Priority } from '../../types'
 
 const PRIORITY_STYLE: Record<Priority, string> = {
   alta: 'bg-rose-500/15 text-rose-300 ring-rose-400/30',
@@ -25,8 +25,8 @@ export function OpportunityBadge({ score }: { score: number }) {
   return <Badge className={OPPORTUNITY_STYLE[lvl]}>{OPPORTUNITY_LABEL[lvl]}</Badge>
 }
 
-export function PresenceBadge({ presence }: { presence: DigitalPresence }) {
-  return <Badge className={DIGITAL_PRESENCE_STYLE[presence]}>{DIGITAL_PRESENCE_LABEL[presence]}</Badge>
+export function MachineFitBadge({ fit }: { fit: MachineFit }) {
+  return <Badge className={MACHINE_FIT_STYLE[fit]}>{MACHINE_FIT_LABEL[fit]}</Badge>
 }
 
 export function StageBadge({ stage }: { stage: CrmStage }) {

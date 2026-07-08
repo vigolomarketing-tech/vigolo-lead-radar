@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { APP } from '../../config/app'
 
 export function AppShell({
   title,
@@ -20,7 +21,7 @@ export function AppShell({
           {children}
         </main>
         <footer className="border-t border-white/10 px-6 py-4 text-center text-xs text-slate-600">
-          Vigolo Lead Radar · Plataforma interna de Vigolo Web Studio
+          2GTech3D Lead Radar · {APP.agency.name} · {APP.agency.site.replace('https://', '')}
         </footer>
       </div>
     </div>

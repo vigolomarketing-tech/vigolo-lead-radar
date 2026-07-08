@@ -1,5 +1,5 @@
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, PresenceBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, MachineFitBadge, StageBadge } from '../../components/ui/badges'
 import { Card } from '../../components/ui/primitives'
 import { formatCurrency } from '../../lib/format'
 import { useLeadStore } from '../../store/useLeadStore'
@@ -23,7 +23,7 @@ export function LeadCard({ lead }: { lead: Lead }) {
 
         <div className="flex flex-wrap gap-1.5">
           <OpportunityBadge score={lead.score} />
-          <PresenceBadge presence={lead.digitalPresence} />
+          <MachineFitBadge fit={lead.machineFit} />
           <StageBadge stage={lead.stage} />
           {lead.analysis && (
             <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-semibold text-violet-300 ring-1 ring-inset ring-violet-400/30">
@@ -31,6 +31,12 @@ export function LeadCard({ lead }: { lead: Lead }) {
             </span>
           )}
         </div>
+
+        {lead.machines[0] && (
+          <p className="truncate rounded-lg bg-electric-500/10 px-2 py-1 text-xs text-electric-200 ring-1 ring-inset ring-electric-400/20">
+            🛠️ {lead.machines[0].name}
+          </p>
+        )}
 
         <div className="flex items-center justify-between border-t border-white/5 pt-2 text-xs text-slate-400">
           <span className="flex flex-wrap items-center gap-x-3 gap-y-1">

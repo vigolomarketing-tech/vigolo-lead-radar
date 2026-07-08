@@ -41,7 +41,7 @@ function isValidReport(r: unknown): r is AnalysisReport {
       typeof rep.summary === 'string' &&
       Array.isArray(rep.findings) &&
       rep.metrics &&
-      typeof rep.metrics.performance === 'number',
+      typeof rep.metrics.ajusteRubro === 'number',
   )
 }
 

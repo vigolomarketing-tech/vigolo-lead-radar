@@ -135,12 +135,6 @@ export function citiesOfProvince(province: string): CityGeo[] {
   return ARGENTINA.find((p) => p.name === province)?.cities ?? []
 }
 
-/** Rubros frecuentes para prospección de webs. */
-export const CATEGORIES = [
-  'Barbería', 'Peluquería', 'Gimnasio', 'Estética', 'Spa', 'Restaurante',
-  'Cafetería', 'Bar', 'Rotisería', 'Heladería', 'Panadería', 'Verdulería',
-  'Inmobiliaria', 'Electricista', 'Plomero', 'Ferretería', 'Cerrajería',
-  'Taller mecánico', 'Odontología', 'Consultorio médico', 'Veterinaria',
-  'Abogado', 'Estudio contable', 'Indumentaria', 'Turismo', 'Hotel',
-  'Metalúrgica', 'Corralón', 'Óptica', 'Farmacia',
-]
+// Rubros industriales objetivo (reexportados desde el catálogo de máquinas
+// para que Prospección, Campañas y el parser de comandos usen una sola lista).
+export { INDUSTRY_NAMES as CATEGORIES } from './machines'

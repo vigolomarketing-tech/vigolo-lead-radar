@@ -1,24 +1,19 @@
 // =====================================================================
-// Análisis de competencia: compara un negocio con otros del mismo rubro
-// y ciudad para ubicar dónde está parado y por qué conviene mejorar.
+// Análisis de contexto: compara una empresa con otras del mismo rubro y
+// ciudad para dimensionar su tamaño relativo y detectar si conviene
+// abordarla antes de que un competidor incorpore la máquina.
 // =====================================================================
 
+import { FIT_ORDER } from '../config/machines'
 import type { Lead } from '../types'
 
 export interface CompetitionInsight {
   peers: number
   reviewsRank: number
-  webBetterThan: number // % de la competencia con peor web
+  activityBetterThan: number // % de la competencia con menos actividad
   bestReviews?: Lead
-  bestWeb?: Lead
+  topFit?: Lead
   summary: string
-}
-
-const PRESENCE_RANK: Record<string, number> = {
-  'sin-web': 0,
-  'web-vieja': 1,
-  'web-aceptable': 2,
-  'buen-potencial': 3,
 }
 
 export function analyzeCompetition(lead: Lead, all: Lead[]): CompetitionInsight | null {
@@ -31,28 +26,29 @@ export function analyzeCompetition(lead: Lead, all: Lead[]): CompetitionInsight 
   const byReviews = [...group].sort(
     (a, b) => (b.signals.reviewsCount ?? 0) - (a.signals.reviewsCount ?? 0),
   )
-  const byWeb = [...group].sort(
-    (a, b) => PRESENCE_RANK[b.digitalPresence] - PRESENCE_RANK[a.digitalPresence],
+  const byFit = [...group].sort(
+    (a, b) => FIT_ORDER[b.machineFit] - FIT_ORDER[a.machineFit] || b.score - a.score,
   )
   const reviewsRank = byReviews.findIndex((l) => l.id === lead.id) + 1
-  const myWeb = PRESENCE_RANK[lead.digitalPresence]
-  const worseWeb = peers.filter((l) => PRESENCE_RANK[l.digitalPresence] < myWeb).length
-  const webBetterThan = Math.round((worseWeb / peers.length) * 100)
+  const myReviews = lead.signals.reviewsCount ?? 0
+  const worse = peers.filter((l) => (l.signals.reviewsCount ?? 0) < myReviews).length
+  const activityBetterThan = Math.round((worse / peers.length) * 100)
 
-  const bestWeb = byWeb[0]
+  const topFit = byFit[0]
   const bestReviews = byReviews[0]
 
-  const summary =
-    lead.digitalPresence === 'sin-web'
-      ? `Entre ${peers.length + 1} ${lead.category.toLowerCase()} de ${lead.city}, ${lead.name} está #${reviewsRank} en reseñas pero SIN web, mientras ${bestWeb.id !== lead.id ? bestWeb.name : 'la competencia'} ya tiene presencia web. Una web lo pondría por delante.`
-      : `${lead.name} compite con ${peers.length} negocios similares en ${lead.city}. Está #${reviewsRank} en reseñas y su web supera al ${webBetterThan}% de la competencia. Hay margen para liderar.`
+  const summary = `Entre ${peers.length + 1} ${lead.category.toLowerCase()} de ${lead.city}, ${lead.name} está #${reviewsRank} en actividad y supera al ${activityBetterThan}% de sus pares. ${
+    lead.machineFit === 'ideal' || lead.machineFit === 'alto'
+      ? 'Es un mercado donde la máquina genera ventaja competitiva directa: conviene abordarlo antes que la competencia.'
+      : 'Vale la pena calificar su volumen de producción antes de avanzar.'
+  }`
 
   return {
     peers: peers.length,
     reviewsRank,
-    webBetterThan,
+    activityBetterThan,
     bestReviews: bestReviews.id !== lead.id ? bestReviews : undefined,
-    bestWeb: bestWeb.id !== lead.id ? bestWeb : undefined,
+    topFit: topFit.id !== lead.id ? topFit : undefined,
     summary,
   }
 }

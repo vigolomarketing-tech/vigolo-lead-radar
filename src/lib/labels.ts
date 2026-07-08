@@ -1,14 +1,21 @@
 import type {
   CrmStage,
-  DigitalPresence,
+  MachineFit,
   OpportunityLevel,
 } from '../types'
 
-export const DIGITAL_PRESENCE_LABEL: Record<DigitalPresence, string> = {
-  'sin-web': 'Sin web',
-  'web-vieja': 'Web vieja',
-  'web-aceptable': 'Web aceptable',
-  'buen-potencial': 'Buena presencia',
+export const MACHINE_FIT_LABEL: Record<MachineFit, string> = {
+  ideal: 'Rubro ideal',
+  alto: 'Encaje alto',
+  medio: 'Encaje medio',
+  exploratorio: 'A validar',
+}
+
+export const MACHINE_FIT_STYLE: Record<MachineFit, string> = {
+  ideal: 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/30',
+  alto: 'bg-electric-500/15 text-electric-300 ring-electric-400/30',
+  medio: 'bg-amber-500/15 text-amber-300 ring-amber-400/30',
+  exploratorio: 'bg-slate-500/15 text-slate-300 ring-slate-400/30',
 }
 
 export const OPPORTUNITY_LABEL: Record<OpportunityLevel, string> = {
@@ -27,13 +34,6 @@ export const OPPORTUNITY_STYLE: Record<OpportunityLevel, string> = {
   alta: 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/30',
   media: 'bg-amber-500/15 text-amber-300 ring-amber-400/30',
   baja: 'bg-slate-500/15 text-slate-300 ring-slate-400/30',
-}
-
-export const DIGITAL_PRESENCE_STYLE: Record<DigitalPresence, string> = {
-  'sin-web': 'bg-emerald-500/15 text-emerald-300 ring-emerald-400/30',
-  'web-vieja': 'bg-amber-500/15 text-amber-300 ring-amber-400/30',
-  'web-aceptable': 'bg-electric-500/15 text-electric-300 ring-electric-400/30',
-  'buen-potencial': 'bg-slate-500/15 text-slate-300 ring-slate-400/30',
 }
 
 export const CRM_STAGE_LABEL: Record<CrmStage, string> = {

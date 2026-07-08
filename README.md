@@ -1,76 +1,95 @@
 <div align="center">
 
-# 🛰️ Vigolo Lead Radar
+# 🛰️ 2GTech3D Lead Radar
 
-**Plataforma SaaS de prospección comercial impulsada por IA**
-para **Vigolo Web Studio**.
+**Plataforma de prospección industrial impulsada por IA** para vender las
+máquinas láser / CNC de **[2GTech3D](https://www.2gtech3d.com)**.
 
-Encontrá negocios en toda Argentina, analizá su presencia digital con IA,
-detectá oportunidades, generá auditorías y mensajes, y gestioná todo el
-proceso comercial — desde un solo lugar.
-
-🔗 **Demo en producción:** <https://vigolomarketing-tech.github.io/vigolo-lead-radar/>
+Encontrá empresas en toda Argentina que **necesitan** una cortadora láser
+fibra, una grabadora de metal/piedra o una CNC CO2. La herramienta detecta el
+rubro, recomienda la máquina ideal, puntúa el potencial de compra, valida la
+calidad del lead y genera el mensaje comercial listo para enviar.
 
 </div>
 
 ---
 
-## 📑 Índice
+## 🏭 El negocio de 2GTech3D (investigación)
 
-1. [Qué hace](#-qué-hace)
-2. [Stack](#-stack)
-3. [Instalación local](#-instalación-local)
-4. [Configurar Google Places](#-configurar-google-places)
-5. [Configurar OpenAI](#-configurar-openai)
-6. [Desplegar el backend (Cloudflare Worker)](#-desplegar-el-backend-cloudflare-worker)
-7. [Deploy del frontend](#-deploy-del-frontend)
-8. [Variables de entorno](#-variables-de-entorno)
-9. [Cómo usar cada función](#-cómo-usar-cada-función)
-10. [Arquitectura](#-arquitectura)
-11. [Roadmap / próximos pasos](#-roadmap--próximos-pasos)
+2GTech3D (Muñiz 1888, CABA — Flores) **importa y vende maquinaria industrial**
+con garantía propia, puesta en marcha y asesoramiento técnico. Su catálogo:
+
+| Línea | Máquinas | Para qué sirve | Ticket (ARS) |
+| ----- | -------- | -------------- | ------------ |
+| **Corte Láser Fibra** | Cortadora Fibra 3015 3kW + compresor | Corte de metal / chapa (acero, inox, aluminio) | ~$69.5M |
+| **Grabado Láser Fibra** | Grabadoras 30W / 60W | Grabado y marcado permanente en metal y piedra | $9.4M – $17M |
+| **Láser CO2** | CO2 50W / 100W / 130W / 150W | Corte y grabado de MDF, madera, acrílico, cuero, tela | $3.4M – $17M |
+| **Construcción** | Vibradores de hormigón, andamio eléctrico | Equipamiento de obra | $0.7M – $14M |
+
+**Propuesta de valor:** importación directa (sin intermediarios), garantía
+propia, servicio postventa, puesta en marcha y asesoramiento técnico.
+
+**Rubros objetivo** (detectados y mapeados a cada máquina): metalúrgicas,
+talleres industriales, herrerías, estructuras metálicas, autopartes,
+mecanizado/CNC, matricería, marmolerías, joyerías, trofeos, regalería
+empresarial, cartelería/señalética, fábricas de muebles, carpinterías,
+marroquinería/cuero, textil, packaging, diseño industrial, prototipado/FabLab,
+impresión 3D, escuelas y universidades técnicas, laboratorios, estudios de
+arquitectura, constructoras y corralones.
+
+El mapeo rubro → máquina + motivo vive en [`src/config/machines.ts`](src/config/machines.ts).
 
 ---
 
 ## 🚀 Qué hace
 
-Vigolo Lead Radar hace el trabajo de horas de prospección manual en minutos:
-
 | Módulo | Descripción |
 | ------ | ----------- |
-| **🛰️ Radar IA** | Recorre Argentina provincia por provincia buscando negocios con oportunidad y guarda los mejores automáticamente. |
-| **⌖ Prospección** | Búsqueda por provincia / ciudad / localidad / barrio / código postal + radio, con filtros avanzados (rating, reseñas, con/sin web, Instagram, verificados, etc.). |
-| **🎯 Campañas** | Organizá la prospección por objetivos ("100 Barberías en Córdoba") con negocios, contactados y conversión. |
-| **🧠 Análisis IA** | Diagnóstico automático de cada negocio: web, velocidad, SEO, WhatsApp, CTA, HTTPS, branding, redes, etc. |
-| **📊 Scoring inteligente** | Puntaje 1–100 con desglose factor por factor y nivel de oportunidad. |
-| **🥊 Competencia** | Compara el negocio con otros de su rubro y ciudad (reseñas, mejor web). |
-| **📄 Auditoría PDF** | Informe profesional con identidad de la agencia, listo para enviar al cliente. |
-| **✨ Generador de Demos** | Crea una landing personalizada para el negocio, lista para mostrarla. |
-| **💬 IA Comercial** | Mensajes personalizados (WhatsApp, Instagram, Email, LinkedIn, seguimientos, objeciones). |
-| **✦ Asesor IA accionable** | Chat que responde y ejecuta acciones ("Buscame barberías sin web en Córdoba", "Generá una campaña en Rosario"). |
-| **▤ CRM profesional** | Pipeline Kanban con drag & drop, prioridad, etiquetas, tareas, notas, historial, recordatorios, valor y probabilidad de cierre. |
-| **⏰ Seguimiento IA** | A quién contactar hoy, con qué canal y probabilidad de respuesta. |
-| **🎯 Metas** | Objetivos de clientes y facturación con progreso. |
-| **⊚ Mapa** | Negocios geolocalizados con clustering + mapa de calor + filtros. |
-| **↓ Exportaciones** | CSV, Excel, JSON, PDF, Google Sheets, Notion. |
-| **⚡ Integraciones** | Arquitectura lista para Google Places, OpenAI, Sheets, HubSpot, Notion, Slack, Discord, WhatsApp, Instagram, Email, Supabase, PostgreSQL, Firebase. |
+| **🛰️ Radar IA** | Recorre Argentina provincia por provincia y guarda las empresas con mayor potencial de compra. |
+| **⌖ Prospección** | Búsqueda por provincia / ciudad / localidad + filtros (rating, reseñas, con/sin web, Instagram, verificados). Incluye **búsquedas sugeridas** (prompts) listas para aplicar. |
+| **🧠 Análisis IA** | Define la **máquina ideal**, arma las **señales de oportunidad** (tercerización, costos, capacidad, calidad, competencia) y compara "hoy vs. con la máquina". |
+| **📊 Scoring de compra** | Puntaje 0–100 con desglose factor por factor: ajuste del rubro, tamaño, capacidad de inversión, contactabilidad, etc. |
+| **✅ Calidad del lead** | Nivel **Alta / Media / Baja** según web activa, teléfono/WhatsApp, redes y rubro compatible. |
+| **🛠️ Máquina recomendada** | Cada lead trae la máquina 2GTech3D sugerida + motivo + ticket estimado. |
+| **📄 Informe PDF** | Análisis de oportunidad con identidad de 2GTech3D, listo para el vendedor. |
+| **✨ Propuesta / one-pager** | Ficha comercial de la máquina personalizada para el lead, lista para enviar por WhatsApp. |
+| **💬 IA Comercial** | Mensajes que **venden la máquina**, adaptados al rubro (WhatsApp, Instagram, Email, LinkedIn, seguimientos, objeciones "tercerizo" / "ya tengo" / precio). |
+| **✦ Asesor IA** | Chat que prioriza prospectos, recomienda máquina, define precio/financiación y ejecuta acciones. |
+| **▤ CRM** | Pipeline Kanban con prioridad, etiquetas, tareas, notas, historial, recordatorios, valor y probabilidad. |
+| **⊚ Mapa · ↓ Exportar · ⚡ Integraciones** | Geolocalización, export a CSV/Excel/JSON/PDF/Sheets/Notion y arquitectura lista para Google Places / OpenAI. |
 
-> ⚠️ La app **nunca envía mensajes sola**: genera el texto para copiar y pegar,
-> evitando bloqueos en WhatsApp / Instagram.
+> ⚠️ La app **nunca envía mensajes sola**: genera el texto para copiar y pegar.
 
-**Funciona sin configurar nada** en modo demo (dataset nacional real de las 24
-provincias). Con las credenciales configuradas, los datos y la IA pasan a ser
-**reales** — sin tocar código.
+**Funciona sin configurar nada** en modo demo (dataset industrial nacional,
+100% ficticio y marcado como tal). Con credenciales, los datos y la IA pasan a
+ser **reales** sin tocar código.
+
+---
+
+## 🎯 Scoring y calidad del lead
+
+**Score de potencial de compra (0–100)** — [`src/lib/scoring.ts`](src/lib/scoring.ts):
+
+- **Ajuste del rubro** con la máquina (driver principal: `ideal` / `alto` / `medio` / `exploratorio`).
+- **Tamaño / trayectoria** aparente (reseñas de Google como proxy de estructura).
+- **Reputación** (rating).
+- **Web propia** → señal **positiva** (empresa formal que invierte en equipamiento).
+- **Facilidad de contacto** (WhatsApp > teléfono).
+- **Redes activas** (Instagram / Facebook) y **verificación** en Google.
+
+**Calidad (Alta / Media / Baja)** se deriva del score y las señales, y se
+explica en cada ficha ("por qué es oportunidad").
 
 ---
 
 ## 🛠️ Stack
 
 - **Frontend:** React 18 · Vite 5 · TypeScript · Tailwind CSS 3
-- **Estado:** Zustand (con persistencia en `localStorage`)
+- **Estado:** Zustand (persistencia en `localStorage`)
 - **Routing:** React Router (HashRouter, compatible con GitHub Pages)
 - **Gráficos:** Recharts · **Mapa:** Leaflet + markercluster + heat
 - **PDF:** jsPDF · **Virtualización:** react-window
-- **Backend/proxy:** Cloudflare Worker
+- **Backend/proxy:** Cloudflare Worker (guarda las API keys server-side)
 
 ---
 
@@ -79,150 +98,47 @@ provincias). Con las credenciales configuradas, los datos y la IA pasan a ser
 Requiere **Node.js 18+**.
 
 ```bash
-git clone https://github.com/vigolomarketing-tech/vigolo-lead-radar.git
-cd vigolo-lead-radar
 npm install
 npm run dev        # http://localhost:5173
 ```
 
-Otros comandos:
+Otros comandos: `npm run build` · `npm run preview` · `npm run lint` · `npm run typecheck`.
 
-```bash
-npm run build      # build de producción (tsc + vite)
-npm run preview    # previsualizar el build
-npm run lint       # ESLint
-```
-
-Copiá `.env.example` a `.env` para configurar credenciales y datos de la agencia.
+Copiá `.env.example` a `.env` para configurar credenciales y datos de 2GTech3D.
 
 ---
 
-## 📍 Configurar Google Places
+## 📍 Datos reales (Google Places) — arquitectura lista
 
-Necesario solo para búsquedas **reales** (en demo funciona sin esto).
+En **modo demo** la app usa un dataset industrial ficticio (marcado como
+`DEMO`). Para trabajar con **empresas reales** de Google Maps / Places:
 
-1. Entrá a [Google Cloud Console](https://console.cloud.google.com/).
-2. Creá un proyecto y activá **Places API (New)**.
-3. Creá una **API Key** en *APIs & Services → Credentials*.
-4. **Restringí la key** a la Places API y configurá cuotas/límites de gasto.
-5. **No pongas la key en el frontend.** Va en el backend (paso siguiente) como
-   secret `GOOGLE_PLACES_API_KEY`.
+1. En [Google Cloud Console](https://console.cloud.google.com/) creá un proyecto
+   y activá **Places API (New)**. Generá una **API Key** restringida.
+2. Desplegá el backend (`server/`, Cloudflare Worker) y cargá la key como secret
+   — **nunca** en el frontend:
+   ```bash
+   cd server && npm install && npx wrangler login
+   npx wrangler secret put GOOGLE_PLACES_API_KEY
+   npx wrangler secret put OPENAI_API_KEY   # opcional (IA real)
+   npm run deploy
+   ```
+3. En el frontend configurá:
+   ```bash
+   VITE_DATA_PROVIDER=google
+   VITE_AI_PROVIDER=openai        # opcional
+   VITE_API_BASE_URL=https://TU-WORKER.workers.dev
+   ```
 
-> La key **nunca** debe estar en variables `VITE_*` ni en el bundle del
-> navegador: cualquiera podría robarla. Por eso existe el backend/proxy.
+El `dataProvider` mapea los resultados de Places con `buildLead()`, así que el
+scoring, la máquina recomendada y los mensajes funcionan igual con datos reales.
+**Si falta una credencial, la app cae sola al modo demo — nunca se rompe.**
 
----
-
-## ✦ Configurar OpenAI
-
-Necesario solo para análisis y mensajes **con IA real** (en demo funciona con
-el analista local).
-
-1. Entrá a [platform.openai.com](https://platform.openai.com/).
-2. Creá una **API Key** en *API Keys*.
-3. Configurá límites de uso.
-4. La key va en el backend como secret `OPENAI_API_KEY`. Modelo por defecto:
-   `gpt-4o-mini` (configurable con `OPENAI_MODEL`).
-
----
-
-## ☁️ Desplegar el backend (Cloudflare Worker)
-
-El backend (`server/`) es un **Cloudflare Worker** que guarda las API keys del
-lado del servidor y resuelve CORS. Deploy en ~5 minutos (plan gratuito alcanza).
-
-```bash
-cd server
-npm install
-npx wrangler login
-
-# Cargar las API keys como secrets (no quedan en el código):
-npx wrangler secret put GOOGLE_PLACES_API_KEY
-npx wrangler secret put OPENAI_API_KEY
-
-# (opcional) restringir CORS a tu dominio en wrangler.toml → ALLOWED_ORIGIN
-
-npm run deploy
-```
-
-Al terminar, Wrangler imprime la URL del Worker, por ejemplo:
-`https://vigolo-lead-radar-api.TU-SUBDOMINIO.workers.dev`
-
-**Endpoints:** `GET /health`, `POST /places/search`, `POST /ai/analyze`,
-`POST /ai/message`, `POST /ai/messages`, `POST /ai/advisor`.
-
-Verificá con: `curl https://TU-WORKER.workers.dev/health`
+> **Búsquedas que ejecuta el backend** (adaptadas al catálogo): "metalúrgicas
+> en Córdoba", "herrerías industriales", "cartelería y letras corpóreas",
+> "marmolerías", "talleres de mecanizado", etc. (ver `SEARCH_PROMPTS`).
 
 ---
-
-## 🌐 Deploy del frontend
-
-La app es **100% estática** (`dist/`). El `base` se configura con `VITE_BASE`.
-
-### Opción A — GitHub Pages (ya configurado)
-
-El workflow `.github/workflows/deploy.yml` publica automáticamente en cada push
-a `main`. Requisito único (una vez): **Settings → Pages → Source = "GitHub
-Actions"**. Queda en `https://<usuario>.github.io/vigolo-lead-radar/`.
-
-### Opción B — Vercel
-
-Importá el repo en [vercel.com/new](https://vercel.com/new): build
-`npm run build`, output `dist`. `VITE_BASE=/` (default).
-
-### Conectar el backend real
-
-En las variables del frontend (`.env`, o Environment Variables en Pages/Vercel):
-
-```bash
-VITE_DATA_PROVIDER=google
-VITE_AI_PROVIDER=openai
-VITE_API_BASE_URL=https://vigolo-lead-radar-api.TU-SUBDOMINIO.workers.dev
-```
-
-Rebuild y listo: datos e IA reales. **Si falta alguna credencial, la app cae
-sola al modo demo/local — nunca se rompe.**
-
----
-
-## 📲 Instalar como app (PWA)
-
-Vigolo Lead Radar es una **PWA instalable**: se puede agregar a la pantalla de
-inicio del celular o al escritorio y abre en modo app (pantalla completa, sin
-barra del navegador). Se mantiene el mismo deploy de GitHub Pages.
-
-### Android (Chrome)
-1. Abrí la URL en Chrome.
-2. Tocá el botón **“Instalar app”** que aparece abajo (o menú ⋮ → *Instalar
-   aplicación* / *Agregar a pantalla de inicio*).
-3. Confirmá. Queda como app con su ícono.
-
-### iPhone / iPad (Safari)
-1. Abrí la URL en **Safari**.
-2. Tocá **Compartir** ⬆️ → **“Agregar a pantalla de inicio”** → **Agregar**.
-   (El botón *Instalar app* de la web te muestra estos mismos pasos.)
-
-### Desktop (Chrome / Edge)
-1. Abrí la URL.
-2. Clic en el ícono de **instalar** en la barra de direcciones (o menú →
-   *Instalar Vigolo Lead Radar*), o el botón **“Instalar app”**.
-
-> El botón *Instalar app* aparece solo si el navegador permite la instalación y
-> se oculta si la app ya está instalada.
-
-### Qué funciona offline
-- Carga de la app (shell), navegación entre secciones y **datos guardados**
-  (leads, CRM, campañas y metas persistidos en el dispositivo).
-- **No** funciona sin conexión: la búsqueda real (Google Places) y la IA real
-  (OpenAI), que necesitan internet. Al perder conexión aparece un aviso y la app
-  sigue usable con lo guardado.
-
-### Cambiar íconos y colores
-- **Colores**: `theme_color` (#3EA6FF) y `background_color` (#050816) en el
-  `manifest` de `vite.config.ts`, más `theme-color` en `index.html`.
-- **Íconos**: editá `scripts/generate-icons.mjs` (colores/diseño del radar) y
-  regenerá con `node scripts/generate-icons.mjs` (usa `sharp`). Se crean en
-  `public/icons/` (192, 512, maskable, apple-touch y splashes iOS).
 
 ## 🔑 Variables de entorno
 
@@ -231,93 +147,79 @@ barra del navegador). Se mantiene el mismo deploy de GitHub Pages.
 | `VITE_DATA_PROVIDER` | frontend | `mock` (demo) o `google` (real). |
 | `VITE_AI_PROVIDER` | frontend | `mock` (local) o `openai` (real). |
 | `VITE_API_BASE_URL` | frontend | URL del Worker backend. |
-| `VITE_AGENCY_NAME` | frontend | Nombre de la agencia en mensajes/auditorías. |
-| `VITE_AGENCY_SIGNATURE` | frontend | Firma al pie de los mensajes. |
-| `VITE_CURRENCY` / `VITE_DEFAULT_TICKET` | frontend | Moneda y ticket base del CRM. |
+| `VITE_AGENCY_NAME` / `VITE_AGENCY_*` | frontend | Nombre y contacto de 2GTech3D en mensajes/propuestas. |
+| `VITE_CURRENCY` / `VITE_DEFAULT_TICKET` | frontend | Moneda (ARS) y ticket base. |
 | `VITE_BASE` | build | `/vigolo-lead-radar/` (Pages) o `/` (Vercel). |
 | `GOOGLE_PLACES_API_KEY` | backend (secret) | Key de Google Places. |
-| `OPENAI_API_KEY` | backend (secret) | Key de OpenAI. |
-| `OPENAI_MODEL` | backend | Modelo (default `gpt-4o-mini`). |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` | backend | IA real (default `gpt-4o-mini`). |
 | `ALLOWED_ORIGIN` | backend | CORS (dominio del front o `*`). |
 
 > Las keys reales van **solo** en el backend como secrets. Nunca en `VITE_*`.
 
 ---
 
-## 📖 Cómo usar cada función
+## 📖 Cómo usar
 
-- **Radar IA** → *Radar IA* → elegí rubro/reseñas/web y **Activar Radar IA**.
-  Recorre las provincias y te muestra las oportunidades más calientes.
-- **Prospección** → elegí provincia/ciudad/rubro (o **Buscar en toda
-  Argentina**), aplicá filtros y explorá los resultados. Click en una tarjeta
-  abre la ficha del lead.
-- **Ficha del lead** (drawer) con pestañas:
-  - *Resumen*: datos del negocio (web, WhatsApp, Instagram, reseñas, Maps).
-  - *Análisis IA*: **Analizar negocio** → diagnóstico, métricas, competencia,
-    y **Auditoría PDF**.
-  - *Mensajes*: **Generar** → variantes por canal + **Copiar**.
-  - *CRM*: estado, prioridad, etiquetas, tareas, notas, historial,
-    recordatorios, valor y probabilidad.
-  - **✨ Crear demo**: genera una landing personalizada en una pestaña nueva.
-- **Campañas** → creá una campaña (provincia/ciudad/rubro + objetivo) y seguí
-  negocios, contactados y conversión.
-- **CRM** → tablero Kanban; **arrastrá** las tarjetas entre estados.
-- **Asesor IA** → preguntá o pedí acciones: *"Buscame gimnasios sin web en
-  Rosario"*, *"Generá una campaña de barberías en Córdoba"*, *"¿Qué precio
-  recomendás?"*.
-- **Mapa** → clusters o mapa de calor, filtro por provincia; click en un
-  marcador abre la ficha.
-- **Dashboard** → KPIs, embudo, metas (editables), seguimientos del día,
-  mejor provincia/ciudad/rubro y gráficos.
-- **Exportar** → botón *Exportar* en Prospección/CRM: CSV, Excel, JSON, PDF,
-  Google Sheets, Notion.
+- **Radar IA** → *Radar IA* → elegí rubro/reseñas y **Activar Radar IA**.
+- **Prospección** → elegí provincia/ciudad/rubro (o **toda Argentina**), o tocá
+  una **búsqueda sugerida**. Click en una tarjeta abre la ficha del lead.
+- **Ficha del lead** (drawer):
+  - *Resumen*: datos + **máquinas recomendadas** con ticket + contacto.
+  - *Análisis IA*: **Analizar empresa** → máquina ideal, señales de
+    oportunidad, indicadores y **Informe PDF**.
+  - *Mensajes*: **Generar** → mensajes que venden la máquina + **Copiar**.
+  - *CRM*: estado, prioridad, etiquetas, tareas, notas, recordatorios.
+  - **✨ Crear propuesta**: one-pager de la máquina para enviar al cliente.
+- **Campañas / CRM / Mapa / Dashboard / Asesor IA / Exportar** como de costumbre.
 
 ---
 
 ## 🏗️ Arquitectura
 
 ```
-vigolo-lead-radar/
-├── server/                 # Backend / proxy (Cloudflare Worker)
-│   ├── src/worker.js       #   Google Places + OpenAI (keys server-side)
-│   ├── wrangler.toml
-│   └── README.md
-└── src/
-    ├── config/             # app, integraciones, geografía de Argentina
-    ├── types/              # modelo de dominio
-    ├── lib/                # scoring, competencia, seguimientos, labels, formato
-    ├── utils/              # exportadores, helpers
-    ├── services/
-    │   ├── providers/      # dataProvider (mock | google) + dataset nacional
-    │   ├── ai/             # aiProvider (mock | openai) + analista local
-    │   ├── audit/          # auditoría PDF
-    │   └── demo/           # generador de demos
-    ├── store/              # Zustand (estado global + persistencia)
-    ├── hooks/              # selectores derivados
-    ├── components/         # UI primitives + layout
-    └── features/           # dashboard, radar, prospecting, campaigns,
-                            # leads, analysis, messages, crm, map, advisor,
-                            # integrations
+src/
+├── config/
+│   ├── machines.ts     # catálogo 2GTech3D + mapeo rubro→máquina + prompts
+│   ├── argentina.ts    # geografía (24 provincias) + rubros industriales
+│   └── app.ts          # branding, moneda (ARS), ticket
+├── types/              # modelo de dominio (MachineFit, MachineMatch, Lead…)
+├── lib/                # scoring (potencial de compra), competencia, labels
+├── services/
+│   ├── providers/      # dataProvider (mock | google) + dataset industrial
+│   ├── ai/             # analista local (análisis + mensajes + asesor)
+│   ├── audit/          # informe PDF de oportunidad
+│   └── demo/           # generador de propuesta / one-pager
+├── store/ · hooks/ · components/
+└── features/           # dashboard, radar, prospecting, campaigns, leads,
+                        # analysis, messages, crm, map, advisor, integrations
 ```
 
-**Providers con adapters** — toda fuente externa está detrás de una fachada
-(`dataProvider`, `aiProvider`). Cambiar de `mock` a `google`/`openai` no toca
-la UI: solo variables de entorno.
+**Providers con adapters** — cambiar de `mock` a `google`/`openai` no toca la
+UI, solo variables de entorno.
 
 ---
 
-## 🧭 Roadmap / próximos pasos
+## ⚠️ Limitaciones y qué falta para datos 100% reales
 
-- Persistencia en la nube (Supabase / PostgreSQL / Firebase) para multi-usuario.
-- Auditoría web real (Lighthouse / PageSpeed) desde el backend.
-- Envío asistido por WhatsApp Business API e Instagram Graph API.
-- Sincronización con HubSpot / Google Sheets / Notion.
-- Autenticación y planes.
+- **Modo demo = datos ficticios.** El dataset nacional es generado y está
+  marcado como `DEMO`; **no** representa empresas reales. Sirve para probar el
+  flujo completo sin backend.
+- **Google Maps / Places no se consulta directo desde el navegador** (la API
+  key no puede exponerse). Ya está toda la arquitectura del proxy lista: falta
+  desplegar el Worker (`server/`) y cargar `GOOGLE_PLACES_API_KEY` para tener
+  empresas reales con teléfono, web, reseñas y ubicación.
+- **La IA local es determinística** (sin costo). Con `OPENAI_API_KEY` en el
+  backend, análisis y mensajes pasan a IA real.
+- **Envío de mensajes manual** (copiar/pegar) para evitar bloqueos de WhatsApp /
+  Instagram. La automatización asistida queda como próximo paso.
+- **Validación de leads** se basa hoy en señales públicas (web activa, teléfono,
+  redes, verificación, rubro). El scraping profundo de cada sitio/red queda para
+  el backend.
 
 ---
 
 <div align="center">
 
-Hecho para uso interno de **Vigolo Web Studio**.
+Herramienta de prospección para el equipo comercial de **2GTech3D**.
 
 </div>

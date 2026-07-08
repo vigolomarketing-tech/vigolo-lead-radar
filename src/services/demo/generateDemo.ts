@@ -1,18 +1,19 @@
 // =====================================================================
-// Generador de DEMO: crea una landing profesional personalizada para un
-// negocio, lista para mostrarle al cliente. 100% client-side.
+// Generador de PROPUESTA (one-pager): crea una ficha comercial lista para
+// enviarle al lead, con la máquina 2GTech3D recomendada, por qué le sirve
+// para su rubro y los beneficios. 100% client-side.
 // =====================================================================
 
 import { APP } from '../../config/app'
+import { MACHINE_BY_ID, MACHINE_LINE_LABEL } from '../../config/machines'
+import { formatCurrency } from '../../lib/format'
 import type { Lead } from '../../types'
 
 const PALETTES = [
   { a: '#3EA6FF', b: '#1f8fef' },
-  { a: '#34d399', b: '#059669' },
-  { a: '#f472b6', b: '#db2777' },
-  { a: '#fbbf24', b: '#d97706' },
-  { a: '#a78bfa', b: '#7c3aed' },
   { a: '#22d3ee', b: '#0891b2' },
+  { a: '#34d399', b: '#059669' },
+  { a: '#a78bfa', b: '#7c3aed' },
 ]
 
 function hash(s: string): number {
@@ -21,93 +22,85 @@ function hash(s: string): number {
   return Math.abs(h)
 }
 
-const SERVICES: Record<string, string[]> = {
-  default: ['Atención personalizada', 'Calidad garantizada', 'Turnos y consultas online'],
-  barberia: ['Cortes clásicos y modernos', 'Arreglo de barba', 'Reservá tu turno online'],
-  gimnasio: ['Musculación y funcional', 'Clases grupales', 'Planes personalizados'],
-  restaurante: ['Menú del día', 'Reservas online', 'Delivery y take away'],
-  estetica: ['Tratamientos faciales', 'Depilación', 'Reservá por WhatsApp'],
-  inmobiliaria: ['Compra y venta', 'Alquileres', 'Tasaciones sin cargo'],
-}
-
-function servicesFor(category: string): string[] {
-  const key = category.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const match = Object.keys(SERVICES).find((k) => k !== 'default' && key.includes(k))
-  return SERVICES[match ?? 'default']
-}
+const BENEFITS = [
+  'Producción propia: dejás de tercerizar y de esperar a terceros.',
+  'Menor costo por pieza y mayor margen en cada trabajo.',
+  'Más precisión y mejor terminación, sin retrabajo.',
+  'Garantía propia, puesta en marcha y asesoramiento técnico de 2GTech3D.',
+]
 
 export function generateDemoHtml(lead: Lead): string {
   const p = PALETTES[hash(lead.name) % PALETTES.length]
-  const services = servicesFor(lead.category)
-  const wa = lead.signals.whatsapp?.replace(/[^\d]/g, '')
-  const waHref = wa ? `https://wa.me/${wa}` : '#contacto'
-  const initials = lead.name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
+  const machine = lead.machines[0]
+  const full = machine ? MACHINE_BY_ID[machine.machineId] : undefined
+  const wa = APP.agency.whatsapp.replace(/[^\d]/g, '')
+  const waText = encodeURIComponent(`Hola, soy de ${APP.agency.name}. Te paso info de la ${machine?.name ?? 'máquina'} para ${lead.name}.`)
+  const waHref = `https://wa.me/${wa}?text=${waText}`
+  const materials = full?.materials.join(' · ') ?? ''
 
   return `<!doctype html>
 <html lang="es">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>${lead.name} — ${lead.category} en ${lead.city}</title>
+<title>Propuesta 2GTech3D — ${lead.name}</title>
 <style>
   :root { --a:${p.a}; --b:${p.b}; }
   * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',system-ui,sans-serif; color:#0f172a; background:#fff; }
-  .hero { background:linear-gradient(135deg,var(--b),var(--a)); color:#fff; padding:80px 24px; text-align:center; }
-  .logo { width:72px;height:72px;border-radius:20px;background:rgba(255,255,255,.2);display:grid;place-items:center;margin:0 auto 20px;font-weight:800;font-size:28px;backdrop-filter:blur(4px); }
-  .hero h1 { font-size:44px; margin-bottom:12px; }
-  .hero p { font-size:19px; opacity:.95; }
-  .cta { display:inline-block;margin-top:28px;background:#fff;color:var(--b);padding:14px 30px;border-radius:999px;font-weight:700;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.2); }
-  .wrap { max-width:1000px;margin:0 auto;padding:64px 24px; }
-  .grid { display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); }
-  .card { border:1px solid #e2e8f0;border-radius:16px;padding:28px;background:#f8fafc; }
-  .card h3 { color:var(--b);margin-bottom:8px; }
-  h2 { text-align:center;font-size:32px;margin-bottom:8px; }
-  .sub { text-align:center;color:#64748b;margin-bottom:40px; }
-  .stats { display:flex;gap:40px;justify-content:center;flex-wrap:wrap;margin-top:20px; }
-  .stat b { font-size:34px;color:var(--a); }
-  footer { background:#050816;color:#94a3b8;text-align:center;padding:40px 24px;font-size:14px; }
-  footer a { color:var(--a);text-decoration:none; }
+  body { font-family:'Segoe UI',system-ui,sans-serif; color:#0f172a; background:#f1f5f9; }
+  .hero { background:linear-gradient(135deg,#050816,var(--b)); color:#fff; padding:56px 24px; text-align:center; }
+  .kicker { text-transform:uppercase; letter-spacing:2px; font-size:12px; opacity:.8; }
+  .hero h1 { font-size:34px; margin:10px 0 6px; }
+  .hero p { font-size:17px; opacity:.95; }
+  .wrap { max-width:920px; margin:0 auto; padding:36px 24px; }
+  .machine { background:#fff; border:1px solid #e2e8f0; border-radius:20px; padding:28px; box-shadow:0 20px 50px rgba(2,8,23,.08); margin-top:-40px; }
+  .machine h2 { color:var(--b); font-size:24px; }
+  .price { font-size:30px; font-weight:800; color:#050816; margin:10px 0; }
+  .tag { display:inline-block; background:var(--a); color:#fff; padding:4px 12px; border-radius:999px; font-size:12px; font-weight:700; }
+  .grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); margin-top:20px; }
+  .card { background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:18px; }
+  .card b { color:var(--b); }
+  .why { background:#0b1220; color:#cbd5e1; border-radius:16px; padding:22px; margin-top:20px; }
+  .why b { color:var(--a); }
+  .cta { display:inline-block; margin-top:20px; background:#25D366; color:#fff; padding:14px 28px; border-radius:999px; font-weight:700; text-decoration:none; }
+  ul { margin:10px 0 0 18px; } li { margin:6px 0; }
+  footer { text-align:center; color:#64748b; font-size:13px; padding:28px; }
 </style>
 </head>
 <body>
   <header class="hero">
-    <div class="logo">${initials}</div>
+    <div class="kicker">Propuesta de equipamiento · 2GTech3D</div>
     <h1>${lead.name}</h1>
-    <p>${lead.category} en ${lead.city}${lead.province ? ', ' + lead.province : ''}</p>
-    <a class="cta" href="${waHref}">Contactanos por WhatsApp</a>
-    ${lead.signals.reviewsCount ? `<div class="stats"><div class="stat"><b>${lead.signals.rating?.toFixed(1) ?? '5.0'}★</b><div>Calificación</div></div><div class="stat"><b>${lead.signals.reviewsCount}+</b><div>Clientes felices</div></div></div>` : ''}
+    <p>${lead.category} · ${lead.city}, ${lead.province}</p>
   </header>
 
-  <section class="wrap">
-    <h2>Lo que ofrecemos</h2>
-    <p class="sub">Calidad y confianza para vos</p>
-    <div class="grid">
-      ${services.map((s) => `<div class="card"><h3>${s}</h3><p>Nos ocupamos de que tengas la mejor experiencia.</p></div>`).join('')}
-    </div>
-  </section>
+  <div class="wrap">
+    <section class="machine">
+      <span class="tag">${machine ? MACHINE_LINE_LABEL[machine.line] : 'Máquina recomendada'}</span>
+      <h2>${machine?.name ?? 'Máquina láser / CNC'}</h2>
+      <div class="price">${machine ? formatCurrency(machine.ticketArs) : 'Consultar'}</div>
+      <p>${full?.useFor ?? ''}</p>
+      ${materials ? `<div class="grid"><div class="card"><b>Materiales</b><br/>${materials}</div><div class="card"><b>Aplicación en ${lead.category}</b><br/>${machine?.reason ?? ''}</div></div>` : ''}
 
-  <section class="wrap" style="background:#f8fafc;border-radius:24px;text-align:center;">
-    <h2>¿Listos para atenderte?</h2>
-    <p class="sub">Escribinos y coordinamos hoy mismo.</p>
-    <a class="cta" style="color:#fff;background:linear-gradient(135deg,var(--b),var(--a))" href="${waHref}" id="contacto">Escribir por WhatsApp</a>
-  </section>
+      <div class="why">
+        <b>¿Por qué le conviene a ${lead.name}?</b>
+        <ul>${BENEFITS.map((b) => `<li>${b}</li>`).join('')}</ul>
+      </div>
+
+      <a class="cta" href="${waHref}">Pedir cotización por WhatsApp</a>
+    </section>
+  </div>
 
   <footer>
-    ${lead.address ? lead.address + ' · ' : ''}${lead.signals.phone ?? ''}<br/>
-    Demo generada por <a href="#">${APP.agency.name}</a> · Vigolo Lead Radar
+    ${APP.agency.name} · ${APP.agency.address}<br/>
+    ${APP.agency.phone} · ${APP.agency.email} · ${APP.agency.site}<br/>
+    <span style="opacity:.7">Documento generado con 2GTech3D Lead Radar</span>
   </footer>
 </body>
 </html>`
 }
 
-/** Abre la demo en una pestaña nueva. */
+/** Abre la propuesta en una pestaña nueva. */
 export function openDemo(html: string): void {
   const blob = new Blob([html], { type: 'text/html' })
   const url = URL.createObjectURL(blob)

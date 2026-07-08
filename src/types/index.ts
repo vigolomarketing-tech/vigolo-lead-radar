@@ -1,14 +1,36 @@
 // =====================================================================
-// Vigolo Lead Radar — Modelo de dominio (v2 SaaS)
+// 2GTech3D Lead Radar — Modelo de dominio
+// Herramienta para detectar empresas argentinas que podrían comprar las
+// máquinas láser/CNC de 2GTech3D (corte fibra, grabado fibra, CO2).
 // =====================================================================
 
 export type OpportunityLevel = 'alta' | 'media' | 'baja'
 
-export type DigitalPresence =
-  | 'sin-web'
-  | 'web-vieja'
-  | 'web-aceptable'
-  | 'buen-potencial'
+/**
+ * Ajuste de la empresa con las máquinas 2GTech3D según su rubro y actividad.
+ *  - 'ideal'        : el rubro USA directamente estas máquinas (metalúrgica,
+ *                     cartelería, herrería…). Máxima probabilidad de compra.
+ *  - 'alto'         : rubro que se beneficia mucho (muebles, marmolería…).
+ *  - 'medio'        : podría incorporarla para diferenciarse.
+ *  - 'exploratorio' : encaje indirecto / a validar antes de invertir tiempo.
+ */
+export type MachineFit = 'ideal' | 'alto' | 'medio' | 'exploratorio'
+
+/** Línea de producto de 2GTech3D. */
+export type MachineLine =
+  | 'laser-fibra' // corte de metal / chapa
+  | 'grabadora-fibra' // grabado metal y piedra
+  | 'co2' // corte y grabado de madera, MDF, acrílico, cuero, tela
+  | 'construccion' // vibradores de hormigón, andamios
+
+/** Máquina recomendada para un lead (con motivo y ticket estimado). */
+export interface MachineMatch {
+  machineId: string
+  name: string
+  line: MachineLine
+  ticketArs: number
+  reason: string
+}
 
 /** Pipeline comercial estilo HubSpot. */
 export type CrmStage =
@@ -30,8 +52,8 @@ export type MessageChannel =
   | 'seguimiento-2'
   | 'seguimiento-3'
   | 'obj-precio'
-  | 'obj-pensarlo'
-  | 'obj-ya-tengo-web'
+  | 'obj-tercerizo'
+  | 'obj-ya-tengo'
   | 'obj-no-responde'
   | 'quiere-reunion'
 
@@ -70,6 +92,7 @@ export interface BusinessSignals {
   rating?: number
   phone?: string
   whatsapp?: string
+  email?: string
   verified?: boolean
   photos?: string[]
 }
@@ -85,27 +108,28 @@ export interface ScoreFactor {
 export interface ScoreResult {
   score: number // 1..100
   level: OpportunityLevel
-  digitalPresence: DigitalPresence
+  machineFit: MachineFit
+  machines: MachineMatch[]
   factors: ScoreFactor[]
   headline: string // resumen de una línea
 }
 
-/** Hallazgo de la auditoría / diagnóstico. */
+/** Señal de oportunidad de la evaluación / diagnóstico. */
 export interface AuditFinding {
   id: string
-  area: 'web' | 'seo' | 'performance' | 'social' | 'confianza' | 'conversion'
+  area: 'produccion' | 'costos' | 'capacidad' | 'calidad' | 'demanda' | 'competencia' | 'material'
   title: string
   status: 'ok' | 'warn' | 'fail'
   priority: 'alta' | 'media' | 'baja'
-  impact: string // cómo impacta / por qué pierde clientes
-  solution: string // cómo lo resuelve una web nueva
+  impact: string // por qué le conviene / qué problema tiene hoy
+  solution: string // cómo lo resuelve una máquina 2GTech3D
 }
 
-/** Comparativa contra un estándar "Vigolo". */
+/** Comparativa: capacidad actual vs. con una máquina 2GTech3D. */
 export interface CompetitorDimension {
   dimension: string
-  theirs: number // 0..100
-  vigolo: number // 0..100
+  theirs: number // 0..100 (situación actual)
+  conMaquina: number // 0..100 (con la máquina 2GTech3D)
 }
 
 /** Informe completo generado por la IA analista. */
@@ -115,13 +139,13 @@ export interface AnalysisReport {
   findings: AuditFinding[]
   competitor?: CompetitorDimension[]
   metrics: {
-    performance: number
-    seo: number
-    ux: number
-    branding: number
-    conversion: number
-    mobile: number
-    trust: number
+    ajusteRubro: number
+    volumen: number
+    capacidadPago: number
+    urgencia: number
+    contactabilidad: number
+    competencia: number
+    tamano: number
   }
 }
 
@@ -141,10 +165,10 @@ export interface Reminder {
   done: boolean
 }
 
-/** Lead = negocio potencial con análisis + CRM. */
+/** Lead = empresa potencial con análisis + CRM. */
 export interface Lead {
   id: string
-  // Identidad del negocio
+  // Identidad de la empresa
   name: string
   category: string
   province: string
@@ -160,7 +184,8 @@ export interface Lead {
   signals: BusinessSignals
   score: number
   scoreLevel: OpportunityLevel
-  digitalPresence: DigitalPresence
+  machineFit: MachineFit
+  machines: MachineMatch[]
   scoreHeadline: string
   scoreFactors: ScoreFactor[]
 
@@ -177,7 +202,7 @@ export interface Lead {
   reminders: Reminder[]
   lastContactDate?: string
   nextFollowUpDate?: string
-  potentialValue: number // ARS/USD estimado
+  potentialValue: number // ARS estimado (máquina recomendada)
   closeProbability: number // 0..100
   proposalSent: boolean
 
@@ -240,7 +265,7 @@ export interface DashboardStats {
   bestCategory: string
 }
 
-/** Campaña de prospección (ej: "100 Barberías en Córdoba"). */
+/** Campaña de prospección (ej: "50 Metalúrgicas en Córdoba"). */
 export interface Campaign {
   id: string
   name: string
@@ -257,7 +282,7 @@ export interface Goals {
   revenueTarget: number
 }
 
-/** Demo (landing) generada para un negocio. */
+/** Ficha técnica (one-pager) generada para un lead. */
 export interface Demo {
   id: string
   leadId: string

@@ -18,9 +18,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['radar.svg', 'icons/apple-touch-icon.png', 'icons/apple-splash-1170-2532.png', 'icons/apple-splash-1284-2778.png'],
       manifest: {
-        name: 'Vigolo Lead Radar',
+        name: '2GTech3D Lead Radar',
         short_name: 'Lead Radar',
-        description: 'Prospección comercial impulsada por IA para Vigolo Web Studio.',
+        description: 'Prospección industrial con IA para vender máquinas láser/CNC de 2GTech3D en toda Argentina.',
         lang: 'es-AR',
         theme_color: '#3EA6FF',
         background_color: '#050816',

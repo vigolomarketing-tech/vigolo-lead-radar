@@ -32,7 +32,7 @@ export function MessagesPanel({ lead }: { lead: Lead }) {
       <div className="mb-3 flex items-center justify-between gap-2">
         <div>
           <h4 className="text-sm font-semibold text-slate-100">IA Comercial</h4>
-          <p className="text-xs text-slate-500">12 variantes con tono argentino. Solo copiar y pegar (no se envían solos).</p>
+          <p className="text-xs text-slate-500">Mensajes para vender la máquina, adaptados al rubro. Solo copiar y pegar (no se envían solos).</p>
         </div>
         <Button size="sm" onClick={generate} disabled={loading}>
           {loading ? <Spinner /> : messages.length ? '↻ Regenerar' : '✨ Generar'}

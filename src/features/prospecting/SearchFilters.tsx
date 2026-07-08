@@ -62,8 +62,8 @@ export function SearchFilters({ onDone }: { onDone?: (count: number) => void }) 
           <Field label="Localidad / Barrio / CP">
             <Input placeholder="Palermo, 1425…" value={p.query} onChange={(e) => set({ query: e.target.value })} />
           </Field>
-          <Field label="Rubro">
-            <Input list="cats" placeholder="barberías, gimnasios…" value={p.category} onChange={(e) => set({ category: e.target.value })} />
+          <Field label="Rubro industrial">
+            <Input list="cats" placeholder="metalúrgicas, carpinterías, cartelería…" value={p.category} onChange={(e) => set({ category: e.target.value })} />
             <datalist id="cats">{CATEGORIES.map((c) => <option key={c} value={c} />)}</datalist>
           </Field>
         </div>
@@ -115,7 +115,7 @@ export function SearchFilters({ onDone }: { onDone?: (count: number) => void }) 
               🇦🇷 Buscar en toda Argentina
             </Button>
             <Button type="submit" size="lg" disabled={isSearching}>
-              {isSearching ? (<><Spinner /> Buscando…</>) : '⌖ Buscar negocios'}
+              {isSearching ? (<><Spinner /> Buscando…</>) : '⌖ Buscar empresas'}
             </Button>
           </div>
         </div>

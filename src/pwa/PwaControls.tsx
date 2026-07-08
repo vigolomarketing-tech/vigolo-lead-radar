@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useInstall, useOnline } from './useInstall'
 import { cn } from '../utils/cn'
 
-const DISMISS_KEY = 'vigolo:install-dismissed'
+const DISMISS_KEY = '2gtech3d:install-dismissed'
 
 export function PwaControls() {
   const { canInstall, iosNeedsManual, promptInstall } = useInstall()
@@ -29,7 +29,7 @@ export function PwaControls() {
         <div className="fixed inset-x-0 top-0 z-[60] flex items-start gap-3 bg-amber-500/95 px-4 py-2.5 text-sm text-amber-950 shadow-lg">
           <span className="mt-0.5 text-base">📡</span>
           <p className="flex-1 font-medium leading-snug">
-            Sin conexión. Vigolo Lead Radar necesita internet para buscar negocios reales,
+            Sin conexión. 2GTech3D Lead Radar necesita internet para buscar empresas reales,
             pero podés revisar los datos guardados.
           </p>
         </div>

@@ -38,7 +38,7 @@ export function CampaignsPage() {
         <h3 className="mb-3 text-sm font-semibold text-slate-100">Nueva campaña</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
           <Field label="Nombre (opcional)">
-            <Input placeholder="Ej: Barberías Córdoba" value={name} onChange={(e) => setName(e.target.value)} />
+            <Input placeholder="Ej: Metalúrgicas Córdoba" value={name} onChange={(e) => setName(e.target.value)} />
           </Field>
           <Field label="Provincia">
             <Select value={province} onChange={(e) => { setProvince(e.target.value); setCity('') }}>

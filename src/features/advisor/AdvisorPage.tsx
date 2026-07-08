@@ -14,11 +14,11 @@ interface Msg {
 }
 
 const SUGGESTIONS = [
-  '¿Qué negocio conviene contactar primero?',
+  '¿Qué empresa conviene contactar primero?',
+  '¿Qué máquina recomiendo más?',
   '¿Qué zona tiene mejores oportunidades?',
-  '¿Qué rubro está funcionando mejor?',
-  '¿Qué precio recomendarías?',
-  '¿Cómo le vendería una web / respondo objeciones?',
+  '¿Qué precio y financiación propongo?',
+  '¿Cómo respondo objeciones?',
 ]
 
 export function AdvisorPage() {
@@ -29,7 +29,7 @@ export function AdvisorPage() {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: 'ai',
-      text: 'Soy tu Asesor IA comercial. Puedo analizar tus leads, priorizar, definir precios, responder objeciones y ejecutar acciones (buscar negocios, crear campañas). Probá: "Buscame barberías sin web en Córdoba" o "Generá una campaña de gimnasios en Rosario".',
+      text: 'Soy tu Asesor IA comercial de 2GTech3D. Puedo priorizar prospectos, recomendar qué máquina ofrecer, definir precios/financiación, responder objeciones y ejecutar acciones (buscar empresas, crear campañas). Probá: "Buscame metalúrgicas en Córdoba" o "Generá una campaña de cartelería en Rosario".',
     },
   ])
   const [input, setInput] = useState('')

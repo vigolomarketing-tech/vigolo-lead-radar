@@ -7,6 +7,8 @@ import { SearchFilters } from './SearchFilters'
 import { useFilteredLeads, useCategories, useProvinces } from '../../hooks/useFilteredLeads'
 import { useLeadStore } from '../../store/useLeadStore'
 import { CRM_STAGE_LABEL, CRM_STAGE_ORDER, OPPORTUNITY_LABEL } from '../../lib/labels'
+import { SEARCH_PROMPTS } from '../../config/machines'
+import { parseCommand } from '../../lib/commandParser'
 import type { CrmStage, OpportunityLevel, Priority } from '../../types'
 
 export function ProspectingPage() {
@@ -16,13 +18,36 @@ export function ProspectingPage() {
   const { filters, setFilters, resetFilters } = useLeadStore()
   const [feedback, setFeedback] = useState<string | null>(null)
 
+  const applyPrompt = (prompt: string) => {
+    const cmd = parseCommand(prompt)
+    if (cmd.filters) {
+      setFilters({ ...cmd.filters })
+      setFeedback(`Filtro aplicado: "${prompt}".`)
+    }
+  }
+
   return (
-    <AppShell title="Prospección" subtitle="Encontrá negocios en toda Argentina">
+    <AppShell title="Prospección" subtitle="Encontrá empresas industriales en toda Argentina">
       <SearchFilters
         onDone={(n) =>
-          setFeedback(n > 0 ? `Se encontraron ${n} negocios.` : 'Sin resultados con esos criterios.')
+          setFeedback(n > 0 ? `Se encontraron ${n} empresas.` : 'Sin resultados con esos criterios.')
         }
       />
+
+      {/* Búsquedas sugeridas (prompts) */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-slate-500">Búsquedas sugeridas:</span>
+        {SEARCH_PROMPTS.map((p) => (
+          <button
+            key={p}
+            onClick={() => applyPrompt(p)}
+            className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-slate-300 ring-1 ring-inset ring-white/10 hover:bg-white/10"
+          >
+            {p}
+          </button>
+        ))}
+      </div>
+
       {feedback && (
         <p className="rounded-lg bg-electric-500/10 px-3 py-2 text-xs text-electric-200 ring-1 ring-inset ring-electric-400/20">
           {feedback}
@@ -74,7 +99,7 @@ export function ProspectingPage() {
         </div>
       </div>
 
-      <p className="text-sm text-slate-400">{filtered.length} negocios</p>
+      <p className="text-sm text-slate-400">{filtered.length} empresas</p>
 
       {filtered.length === 0 ? (
         <EmptyState title="Sin resultados" subtitle="Ajustá los filtros o hacé un nuevo sondeo." />

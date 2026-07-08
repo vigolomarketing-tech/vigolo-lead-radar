@@ -108,7 +108,7 @@ export const useLeadStore = create<LeadState>()(
       analyzingIds: [],
       sweepProgress: null,
       campaigns: [],
-      goals: { clientsTarget: 10, revenueTarget: 5000000 },
+      goals: { clientsTarget: 4, revenueTarget: 60000000 },
       demos: [],
 
       addCampaign: (c) =>
@@ -337,7 +337,7 @@ export const useLeadStore = create<LeadState>()(
       resetDemo: () => set({ leads: MOCK_LEADS, filters: EMPTY_FILTERS, selectedId: null }),
     }),
     {
-      name: 'vigolo-lead-radar:v4',
+      name: '2gtech3d-lead-radar:v1',
       partialize: (s) => ({
         leads: s.leads,
         campaigns: s.campaigns,

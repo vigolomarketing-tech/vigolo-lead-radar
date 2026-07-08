@@ -40,7 +40,7 @@ export function Sidebar() {
 
       <div className="mt-auto rounded-xl border border-white/10 bg-white/[0.03] p-3 text-xs text-slate-400">
         <p className="font-semibold text-slate-200">{APP.agency.name}</p>
-        <p className="mt-1">Plataforma de prospección impulsada por IA.</p>
+        <p className="mt-1">Prospección industrial impulsada por IA. Encontrá empresas que necesitan máquinas láser/CNC.</p>
       </div>
     </aside>
   )
@@ -60,7 +60,7 @@ export function Brand() {
       </div>
       <div>
         <p className="text-sm font-extrabold leading-tight text-slate-50">
-          Vigolo <span className="text-electric-400">Lead Radar</span>
+          2GTech3D <span className="text-electric-400">Lead Radar</span>
         </p>
         <p className="text-[11px] text-slate-500">{APP.tagline}</p>
       </div>

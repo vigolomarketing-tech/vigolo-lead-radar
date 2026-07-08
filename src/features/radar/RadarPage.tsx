@@ -10,7 +10,7 @@ import type { SearchParams } from '../../types'
 const BASE: SearchParams = {
   nationwide: true, province: '', city: '', query: '', locationKind: 'pais',
   category: '', radiusKm: 5, minRating: 0, minReviews: 0, openNow: false,
-  hasWebsite: 'no', hasPhone: false, hasInstagram: false, verifiedOnly: false,
+  hasWebsite: 'any', hasPhone: false, hasInstagram: false, verifiedOnly: false,
 }
 
 export function RadarPage() {
@@ -20,8 +20,8 @@ export function RadarPage() {
   const leads = useLeadStore((s) => s.leads)
   const select = useLeadStore((s) => s.select)
   const [category, setCategory] = useState('')
-  const [minReviews, setMinReviews] = useState(20)
-  const [webFilter, setWebFilter] = useState<SearchParams['hasWebsite']>('no')
+  const [minReviews, setMinReviews] = useState(10)
+  const [webFilter, setWebFilter] = useState<SearchParams['hasWebsite']>('any')
   const [done, setDone] = useState<{ count: number; top: string[] } | null>(null)
 
   const activate = async () => {
@@ -41,7 +41,7 @@ export function RadarPage() {
   const topLeads = done ? done.top.map((id) => leads.find((l) => l.id === id)!).filter(Boolean) : []
 
   return (
-    <AppShell title="Radar IA" subtitle="La IA recorre Argentina y encuentra oportunidades por vos">
+    <AppShell title="Radar IA" subtitle="La IA recorre Argentina y encuentra empresas que necesitan máquinas">
       <Card className="p-6">
         <div className="flex flex-col items-center gap-4 text-center">
           <div className="relative grid h-20 w-20 place-items-center overflow-hidden rounded-full bg-base-900 ring-1 ring-inset ring-electric-400/40">
@@ -51,8 +51,8 @@ export function RadarPage() {
           <div>
             <h2 className="text-xl font-bold text-slate-50">Activar Radar IA</h2>
             <p className="mx-auto mt-1 max-w-md text-sm text-slate-400">
-              El Radar recorre provincia por provincia buscando negocios con alta oportunidad
-              (por defecto, sin web) y guarda los mejores automáticamente.
+              El Radar recorre provincia por provincia buscando empresas industriales con
+              alto potencial de compra y guarda los mejores prospectos automáticamente.
             </p>
           </div>
 
@@ -64,11 +64,11 @@ export function RadarPage() {
             <Field label={`Reseñas mínimas: ${minReviews}`}>
               <input type="range" min={0} max={150} step={10} value={minReviews} onChange={(e) => setMinReviews(Number(e.target.value))} className="w-full accent-electric-400" />
             </Field>
-            <Field label="Web">
+            <Field label="Sitio web">
               <Select value={webFilter} onChange={(e) => setWebFilter(e.target.value as SearchParams['hasWebsite'])}>
-                <option value="no">Sin web (recomendado)</option>
                 <option value="any">Todas</option>
-                <option value="yes">Con web</option>
+                <option value="yes">Con web (más formal)</option>
+                <option value="no">Sin web</option>
               </Select>
             </Field>
           </div>

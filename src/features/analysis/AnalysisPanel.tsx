@@ -42,10 +42,10 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
           <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full bg-violet-500/15 text-2xl text-violet-300">
             ✦
           </div>
-          <p className="font-semibold text-slate-100">Analizar negocio con IA</p>
+          <p className="font-semibold text-slate-100">Analizar empresa con IA</p>
           <p className="mx-auto mt-1 max-w-sm text-sm text-slate-400">
-            La IA revisa web, Google Business, Instagram, Facebook y LinkedIn, y genera un
-            diagnóstico completo con impacto y solución.
+            La IA evalúa el rubro, la actividad y las señales públicas, define la máquina
+            2GTech3D ideal y genera las razones por las que le conviene.
           </p>
           <div className="mt-4 flex justify-center">
             <Button onClick={() => analyze(lead.id)} disabled={analyzing} size="lg">
@@ -54,7 +54,7 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
                   <Spinner /> Analizando…
                 </>
               ) : (
-                '✦ Analizar negocio'
+                '✦ Analizar empresa'
               )}
             </Button>
           </div>
@@ -68,9 +68,9 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
       {/* Resumen */}
       <Card className="p-4">
         <div className="mb-2 flex items-center justify-between gap-2">
-          <h4 className="text-sm font-semibold text-slate-100">Diagnóstico inteligente</h4>
+          <h4 className="text-sm font-semibold text-slate-100">Diagnóstico de oportunidad</h4>
           <Button size="sm" variant="secondary" onClick={downloadPdf} disabled={pdfLoading}>
-            {pdfLoading ? <Spinner /> : '📄'} Auditoría PDF
+            {pdfLoading ? <Spinner /> : '📄'} Informe PDF
           </Button>
         </div>
         <p className="text-sm leading-relaxed text-slate-300">{report.summary}</p>
@@ -78,7 +78,7 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
 
       {/* Métricas */}
       <Card className="p-4">
-        <h4 className="mb-3 text-sm font-semibold text-slate-100">Métricas de presencia digital</h4>
+        <h4 className="mb-3 text-sm font-semibold text-slate-100">Indicadores de potencial de compra</h4>
         <div className="grid gap-3 sm:grid-cols-2">
           {Object.entries(report.metrics).map(([k, v]) => (
             <div key={k}>
@@ -94,10 +94,10 @@ export function AnalysisPanel({ lead }: { lead: Lead }) {
 
       <ScoreBreakdown lead={lead} />
 
-      {/* Hallazgos */}
+      {/* Señales de oportunidad */}
       <Card className="p-4">
         <h4 className="mb-3 text-sm font-semibold text-slate-100">
-          Problemas encontrados ({report.findings.length})
+          Señales de oportunidad ({report.findings.length})
         </h4>
         <div className="space-y-3">
           {report.findings.map((f) => (
@@ -120,27 +120,27 @@ function CityCompetition({ lead }: { lead: Lead }) {
   return (
     <Card className="p-4">
       <h4 className="mb-1 text-sm font-semibold text-slate-100">
-        Competencia en {lead.city}
+        Contexto en {lead.city}
       </h4>
       <p className="mb-3 text-sm text-slate-300">{insight.summary}</p>
       <div className="grid grid-cols-3 gap-2 text-center">
         <div className="rounded-lg bg-white/5 py-2">
           <div className="text-lg font-bold text-slate-50">#{insight.reviewsRank}</div>
-          <div className="text-[10px] text-slate-400">en reseñas</div>
+          <div className="text-[10px] text-slate-400">en actividad</div>
         </div>
         <div className="rounded-lg bg-white/5 py-2">
           <div className="text-lg font-bold text-slate-50">{insight.peers}</div>
-          <div className="text-[10px] text-slate-400">competidores</div>
+          <div className="text-[10px] text-slate-400">pares del rubro</div>
         </div>
         <div className="rounded-lg bg-white/5 py-2">
-          <div className="text-lg font-bold text-slate-50">{insight.webBetterThan}%</div>
-          <div className="text-[10px] text-slate-400">web superada</div>
+          <div className="text-lg font-bold text-slate-50">{insight.activityBetterThan}%</div>
+          <div className="text-[10px] text-slate-400">pares superados</div>
         </div>
       </div>
-      {(insight.bestReviews || insight.bestWeb) && (
+      {(insight.bestReviews || insight.topFit) && (
         <div className="mt-3 space-y-1 text-xs text-slate-400">
-          {insight.bestReviews && <p>🏆 Más reseñas: <span className="text-slate-200">{insight.bestReviews.name}</span> ({insight.bestReviews.signals.reviewsCount})</p>}
-          {insight.bestWeb && <p>🌐 Mejor web: <span className="text-slate-200">{insight.bestWeb.name}</span></p>}
+          {insight.bestReviews && <p>🏆 Más actividad: <span className="text-slate-200">{insight.bestReviews.name}</span> ({insight.bestReviews.signals.reviewsCount})</p>}
+          {insight.topFit && <p>🎯 Mejor prospecto del rubro: <span className="text-slate-200">{insight.topFit.name}</span></p>}
         </div>
       )}
     </Card>
@@ -148,8 +148,10 @@ function CityCompetition({ lead }: { lead: Lead }) {
 }
 
 const METRIC_LABEL: Record<string, string> = {
-  performance: 'Velocidad', seo: 'SEO', ux: 'UX', branding: 'Branding',
-  conversion: 'Conversión', mobile: 'Móvil', trust: 'Confianza',
+  ajusteRubro: 'Ajuste del rubro', volumen: 'Volumen de producción',
+  capacidadPago: 'Capacidad de inversión', urgencia: 'Urgencia',
+  contactabilidad: 'Contactabilidad', competencia: 'Presión competitiva',
+  tamano: 'Tamaño aparente',
 }
 
 function FindingRow({ f }: { f: AuditFinding }) {
@@ -203,10 +205,10 @@ export function CompetitorCompare({ lead }: { lead: Lead }) {
   return (
     <Card className="p-4">
       <h4 className="mb-1 text-sm font-semibold text-slate-100">
-        Comparación vs. una web de Vigolo
+        Hoy vs. con una máquina 2GTech3D
       </h4>
       <p className="mb-3 text-xs text-slate-400">
-        Por qué una web moderna generaría mejores resultados que la actual.
+        Cómo mejorarían sus indicadores al incorporar la máquina recomendada.
       </p>
       <div className="space-y-3">
         {dims.map((d) => (
@@ -215,12 +217,12 @@ export function CompetitorCompare({ lead }: { lead: Lead }) {
               <span className="text-slate-400">{d.dimension}</span>
               <span className="text-slate-300">
                 <span className="text-rose-300">{d.theirs}</span> →{' '}
-                <span className="font-semibold text-emerald-300">{d.vigolo}</span>
+                <span className="font-semibold text-emerald-300">{d.conMaquina}</span>
               </span>
             </div>
             <div className="relative h-2 w-full overflow-hidden rounded-full bg-white/10">
               <div className="absolute inset-y-0 left-0 rounded-full bg-rose-500/40" style={{ width: `${d.theirs}%` }} />
-              <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-400/80" style={{ width: `${d.vigolo}%`, mixBlendMode: 'screen' }} />
+              <div className="absolute inset-y-0 left-0 rounded-full bg-emerald-400/80" style={{ width: `${d.conMaquina}%`, mixBlendMode: 'screen' }} />
             </div>
           </div>
         ))}

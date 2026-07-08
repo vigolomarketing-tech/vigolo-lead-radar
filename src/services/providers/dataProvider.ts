@@ -37,8 +37,9 @@ function applyFilters(leads: Lead[], p: SearchParams): Lead[] {
     if (p.minRating && (l.signals.rating ?? 0) < p.minRating) return false
     if (p.minReviews && (l.signals.reviewsCount ?? 0) < p.minReviews) return false
     if (p.openNow && !l.openingHours?.openNow) return false
-    if (p.hasWebsite === 'yes' && l.digitalPresence === 'sin-web') return false
-    if (p.hasWebsite === 'no' && l.digitalPresence !== 'sin-web') return false
+    const hasWeb = Boolean(l.signals.website && l.signals.website.trim())
+    if (p.hasWebsite === 'yes' && !hasWeb) return false
+    if (p.hasWebsite === 'no' && hasWeb) return false
     if (p.hasPhone && !l.signals.phone && !l.signals.whatsapp) return false
     if (p.hasInstagram && !l.signals.instagram) return false
     if (p.verifiedOnly && !l.signals.verified) return false

@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Drawer } from '../../components/ui/Drawer'
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, PresenceBadge, PriorityBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, MachineFitBadge, PriorityBadge, StageBadge } from '../../components/ui/badges'
+import { formatCurrency } from '../../lib/format'
 import { Button } from '../../components/ui/primitives'
 import { AnalysisPanel } from '../analysis/AnalysisPanel'
 import { MessagesPanel } from '../messages/MessagesPanel'
@@ -53,7 +54,7 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
               <p className="text-sm text-slate-400">{lead.category} · {lead.city}, {lead.province}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 <OpportunityBadge score={lead.score} />
-                <PresenceBadge presence={lead.digitalPresence} />
+                <MachineFitBadge fit={lead.machineFit} />
                 <StageBadge stage={lead.stage} />
                 <PriorityBadge priority={lead.priority} />
               </div>
@@ -101,8 +102,8 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
           Eliminar
         </Button>
         <div className="flex gap-2">
-          <Button variant="success" size="sm" onClick={createDemo} title="Generar una landing de muestra para el cliente">
-            ✨ Crear demo
+          <Button variant="success" size="sm" onClick={createDemo} title="Generar una propuesta / ficha de la máquina para enviar al cliente">
+            ✨ Crear propuesta
           </Button>
           <Button variant="secondary" size="sm" onClick={onClose}>
             Cerrar
@@ -120,7 +121,8 @@ function Overview({ lead }: { lead: Lead }) {
     ['Dirección', lead.address],
     ['Teléfono', lead.signals.phone, lead.signals.phone ? `tel:${lead.signals.phone.replace(/[^\d+]/g, '')}` : undefined],
     ['WhatsApp', lead.signals.whatsapp, lead.signals.whatsapp ? `https://wa.me/${lead.signals.whatsapp.replace(/[^\d]/g, '')}` : undefined],
-    ['Sitio web', lead.signals.website ?? 'Sin web', lead.signals.website],
+    ['Email', lead.signals.email, lead.signals.email ? `mailto:${lead.signals.email}` : undefined],
+    ['Sitio web', lead.signals.website, lead.signals.website],
     ['Instagram', lead.signals.instagram, lead.signals.instagram ? `https://instagram.com/${lead.signals.instagram.replace(/^@/, '')}` : undefined],
     ['Facebook', lead.signals.facebook],
     ['LinkedIn', lead.signals.linkedin],
@@ -149,8 +151,26 @@ function Overview({ lead }: { lead: Lead }) {
           ))}
         </dl>
       </div>
+      <div className="rounded-2xl border border-electric-400/20 bg-electric-500/[0.06] p-4">
+        <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-electric-300">Máquinas recomendadas</h4>
+        {lead.machines.length === 0 ? (
+          <p className="text-sm text-slate-400">Sin recomendación (rubro a validar).</p>
+        ) : (
+          <ul className="space-y-2">
+            {lead.machines.map((m) => (
+              <li key={m.machineId} className="flex items-start justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-slate-100">🛠️ {m.name}</span>
+                  <span className="block text-xs text-slate-400">{m.reason}</span>
+                </span>
+                <span className="shrink-0 text-xs font-semibold text-electric-300">{formatCurrency(m.ticketArs)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-        <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Oportunidad</h4>
+        <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Por qué es oportunidad</h4>
         <p className="text-sm text-slate-300">{lead.scoreHeadline}</p>
       </div>
     </div>
