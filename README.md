@@ -66,6 +66,33 @@ ser **reales** sin tocar código.
 
 ---
 
+## 🧠 Inteligencia comercial (lo que la hace usable a diario)
+
+Para cada empresa la herramienta genera, sin costo y al instante:
+
+- **Análisis específico** (no genérico): infiere **qué fabrica**, con qué
+  **materiales**, qué **procesos** hace, su **tipo de producción**, la
+  **maquinaria que probablemente ya usa** y sus **oportunidades de mejora**.
+- **Razón de compra** puntual por empresa (p. ej. *"Trabajan con acero
+  inoxidable y hoy tercerizan el corte; una CNC Láser Fibra reduce tiempos y
+  costos"*), visible en cards, tabla y exportaciones.
+- **Nivel de urgencia** (🔥 alta / ⚡ media / 💤 baja) con explicación, para
+  saber a quién llamar primero.
+- **ROI aproximado**: ahorro mensual estimado por dejar de tercerizar y meses
+  de repago de la máquina.
+- **Preparar estrategia comercial** (un botón): beneficios específicos,
+  argumentos, **guión de llamada**, **objeciones con respuesta**, ROI y
+  **mensajes por canal** (WhatsApp, Instagram, Email, LinkedIn, seguimientos).
+  Botón *Copiar todo* para llevártelo a tu CRM/WhatsApp.
+- **Buscar empresas similares**: amplía la prospección al mismo rubro en un click.
+- **Vista Tabla** profesional (urgencia, score, máquina, razón de compra,
+  ticket, contacto directo) + **Vista Cards**, con filtro por urgencia.
+
+> Con OpenAI conectado en el backend, estos textos pasan a IA real; sin
+> conexión, el motor determinístico local cubre todo.
+
+---
+
 ## 🎯 Scoring y calidad del lead
 
 **Score de potencial de compra (0–100)** — [`src/lib/scoring.ts`](src/lib/scoring.ts):
