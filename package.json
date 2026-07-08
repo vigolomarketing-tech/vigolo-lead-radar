@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Herramienta interna de Vigolo Web Studio para sondear zonas, detectar negocios con oportunidad de venderles paginas web, organizar leads y generar mensajes de prospeccion.",
+  "description": "2GTech3D Lead Radar: herramienta de prospeccion industrial con IA para encontrar empresas en Argentina que necesitan las maquinas laser/CNC de 2GTech3D, calificarlas y preparar la estrategia comercial.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

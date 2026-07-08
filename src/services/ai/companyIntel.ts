@@ -221,7 +221,7 @@ export function estimateRoi(lead: Lead): RoiEstimate {
   return {
     monthlySaving,
     paybackMonths,
-    note: `Estimando ~${AR.format(monthlySaving)}/mes hoy en tercerización o costo evitable, la máquina se repaga en ~${paybackMonths} meses.`,
+    note: `Estimación orientativa (a validar con el cliente): si hoy destinan ~${AR.format(monthlySaving)}/mes a tercerización o costo evitable, la máquina se repagaría en ~${paybackMonths} meses.`,
   }
 }
 

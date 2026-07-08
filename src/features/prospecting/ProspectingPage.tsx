@@ -6,6 +6,7 @@ import { VirtualLeadGrid } from '../../components/leads/VirtualLeadGrid'
 import { LeadTable } from '../../components/leads/LeadTable'
 import { SearchFilters } from './SearchFilters'
 import { useFilteredLeads, useCategories, useProvinces } from '../../hooks/useFilteredLeads'
+import { activeDataProvider } from '../../services/providers/dataProvider'
 import { useLeadStore } from '../../store/useLeadStore'
 import { CRM_STAGE_LABEL, CRM_STAGE_ORDER, OPPORTUNITY_LABEL, URGENCY_LABEL } from '../../lib/labels'
 import { SEARCH_PROMPTS } from '../../config/machines'
@@ -50,6 +51,12 @@ export function ProspectingPage() {
           </button>
         ))}
       </div>
+
+      {activeDataProvider !== 'google' && (
+        <p className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-inset ring-amber-400/20">
+          ⚠️ <span className="font-semibold">Datos de ejemplo (modo demo).</span> Las empresas listadas son ficticias, para probar la herramienta. Conectá Google Places para prospectar empresas reales (ver README).
+        </p>
+      )}
 
       {feedback && (
         <p className="rounded-lg bg-electric-500/10 px-3 py-2 text-xs text-electric-200 ring-1 ring-inset ring-electric-400/20">

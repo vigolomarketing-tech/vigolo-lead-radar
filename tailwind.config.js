@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Paleta Vigolo Lead Radar
+        // Paleta 2GTech3D Lead Radar
         base: {
           950: '#050816', // fondo principal
           900: '#0a0f24',
