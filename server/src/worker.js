@@ -1,11 +1,11 @@
 // =====================================================================
-// Vigolo Lead Radar — Backend / Proxy (Cloudflare Worker)
+// 2GTech3D Lead Radar — Backend / Proxy (Cloudflare Worker)
 // ---------------------------------------------------------------------
 // Protege las API keys (Google Places + OpenAI) del lado del servidor y
 // resuelve CORS. El frontend (VITE_API_BASE_URL) llama estos endpoints:
 //   POST /places/search   → Google Places (New) Text Search + mapeo
-//   POST /ai/analyze      → OpenAI: diagnóstico del negocio
-//   POST /ai/message      → OpenAI: 1 mensaje
+//   POST /ai/analyze      → OpenAI: análisis de oportunidad de máquina
+//   POST /ai/message      → OpenAI: 1 mensaje comercial
 //   POST /ai/messages     → OpenAI: set de mensajes
 //   POST /ai/advisor      → OpenAI: asesor comercial
 //   GET  /health          → estado
@@ -16,7 +16,8 @@
 //   OPENAI_MODEL (default gpt-4o-mini), ALLOWED_ORIGIN (CORS)
 // =====================================================================
 
-const HIGH_INTENT = ['barberia','peluqueria','gimnasio','estetica','spa','restaurante','cafeteria','bar','inmobiliaria','electricista','plomero','ferreteria','odontologia','consultorio','abogado','contador','veterinaria','turismo','hotel','indumentaria']
+// Rubros industriales objetivo (para armar consultas y scoring server-side).
+const INDUSTRIAL_RUBROS = ['metalurgica','herreria','taller industrial','mecanizado','matriceria','autopartes','estructuras metalicas','carpinteria','fabrica de muebles','carteleria','señaletica','marmoleria','joyeria','trofeos','marroquineria','textil','packaging','prototipado','escuela tecnica','fabrica']
 
 function corsHeaders(env) {
   return {
@@ -163,13 +164,13 @@ async function openai(env, messages, jsonMode = false) {
   return data.choices?.[0]?.message?.content || ''
 }
 
-const SYS = 'Sos un vendedor argentino experto de una agencia de desarrollo web (Vigolo Web Studio). Escribís mensajes humanos, cercanos, profesionales y persuasivos, sin sonar spam. Nunca inventás datos ni prometés precios.'
+const SYS = 'Sos un vendedor industrial argentino experto de 2GTech3D, empresa que importa y vende máquinas láser/CNC (corte láser fibra para metal, grabadoras láser fibra para metal y piedra, y máquinas CO2 para madera, MDF, acrílico y cuero). Escribís mensajes humanos, cercanos y persuasivos para venderle una máquina a la empresa, sin sonar spam. Enfocás en producción propia, dejar de tercerizar, bajar costos y sumar capacidad. Nunca inventás datos ni prometés precios exactos.'
 
 async function aiMessage(body, env) {
   const { lead, channel } = body
   const text = await openai(env, [
     { role: 'system', content: SYS },
-    { role: 'user', content: `Escribí un mensaje de prospección para el canal "${channel}" dirigido a este negocio:\n${JSON.stringify(businessBrief(lead))}\nDevolvé solo el texto del mensaje.` },
+    { role: 'user', content: `Escribí un mensaje comercial para el canal "${channel}" dirigido a esta empresa, para venderle la máquina recomendada:\n${JSON.stringify(businessBrief(lead))}\nDevolvé solo el texto del mensaje.` },
   ])
   return { text: text.trim() }
 }
@@ -180,10 +181,13 @@ async function aiMessages(body, env) {
     ['whatsapp','WhatsApp'],['instagram','Instagram DM'],['email','Email'],
     ['linkedin','LinkedIn'],['seguimiento-1','Seguimiento 1'],
     ['seguimiento-2','Seguimiento 2'],['seguimiento-3','Seguimiento 3'],
+    ['obj-precio','Objeción: precio'],['obj-tercerizo','Objeción: "tercerizo"'],
+    ['obj-ya-tengo','Objeción: "ya tengo"'],['obj-no-responde','No responde'],
+    ['quiere-reunion','Quiere reunión'],
   ]
   const content = await openai(env, [
     { role: 'system', content: SYS },
-    { role: 'user', content: `Generá mensajes de prospección para el negocio:\n${JSON.stringify(businessBrief(lead))}\nDevolvé un JSON: {"messages":[{"channel":"whatsapp","label":"WhatsApp","text":"..."}, ...]} para estos canales: ${channels.map((c) => c[0]).join(', ')}.` },
+    { role: 'user', content: `Generá mensajes comerciales para venderle la máquina a esta empresa:\n${JSON.stringify(businessBrief(lead))}\nDevolvé un JSON: {"messages":[{"channel":"whatsapp","label":"WhatsApp","text":"..."}, ...]} para estos canales: ${channels.map((c) => c[0]).join(', ')}.` },
   ], true)
   try {
     const parsed = JSON.parse(content)
@@ -196,7 +200,7 @@ async function aiAdvisor(body, env) {
   const { question, leads } = body
   const top = (leads || []).slice().sort((a, b) => b.score - a.score).slice(0, 25).map(businessBrief)
   const answer = await openai(env, [
-    { role: 'system', content: SYS + ' Actuás como consultor comercial. Respondés claro y accionable, en español rioplatense.' },
+    { role: 'system', content: SYS + ' Actuás como consultor comercial. Priorizás prospectos, recomendás qué máquina ofrecer y respondés claro y accionable, en español rioplatense.' },
     { role: 'user', content: `Datos de leads (top por score):\n${JSON.stringify(top)}\n\nPregunta: ${question}` },
   ])
   return { answer: answer.trim() }
@@ -206,18 +210,18 @@ async function aiAnalyze(body, env) {
   const { lead } = body
   const metrics = deriveMetrics(lead)
   const content = await openai(env, [
-    { role: 'system', content: 'Sos un auditor de presencia digital. Analizás negocios para una agencia web. Respondés en español, en JSON válido.' },
-    { role: 'user', content: `Analizá este negocio y devolvé JSON con: {"summary": "...", "findings": [{"area":"web|seo|performance|social|confianza|conversion","title":"...","status":"ok|warn|fail","priority":"alta|media|baja","impact":"...","solution":"..."}]}\nNegocio:\n${JSON.stringify(businessBrief(lead))}` },
+    { role: 'system', content: 'Sos un ingeniero comercial de 2GTech3D. Analizás una empresa industrial para detectar por qué le conviene una máquina láser/CNC (corte fibra, grabado fibra o CO2). Respondés en español, en JSON válido. Sé específico al rubro: materiales, procesos y qué terceriza hoy.' },
+    { role: 'user', content: `Analizá esta empresa y devolvé JSON con: {"summary": "...", "findings": [{"area":"produccion|costos|capacidad|calidad|demanda|competencia|material","title":"...","status":"ok|warn|fail","priority":"alta|media|baja","impact":"por qué le conviene / qué problema tiene hoy","solution":"cómo lo resuelve la máquina 2GTech3D"}]}\nEmpresa:\n${JSON.stringify(businessBrief(lead))}` },
   ], true)
   let parsed = {}
   try { parsed = JSON.parse(content) } catch { /* noop */ }
   return {
     generatedAt: new Date().toISOString(),
-    summary: parsed.summary || `${lead.name}: análisis de presencia digital.`,
+    summary: parsed.summary || `${lead.name}: análisis de oportunidad de máquina.`,
     findings: (Array.isArray(parsed.findings) ? parsed.findings : []).map((f, i) => ({
       id: `f${i}`,
-      area: f.area || 'web',
-      title: f.title || 'Hallazgo',
+      area: f.area || 'produccion',
+      title: f.title || 'Señal de oportunidad',
       status: f.status || 'warn',
       priority: f.priority || 'media',
       impact: f.impact || '',
@@ -232,20 +236,24 @@ function businessBrief(lead) {
     name: lead.name, category: lead.category, province: lead.province, city: lead.city,
     website: lead.signals?.website || 'no tiene', instagram: lead.signals?.instagram || 'no',
     reviews: lead.signals?.reviewsCount ?? 0, rating: lead.signals?.rating ?? 0,
-    presencia: lead.digitalPresence, score: lead.score,
+    ajusteRubro: lead.machineFit, maquinaRecomendada: lead.machines?.[0]?.name || null,
+    razonDeCompra: lead.reasonToBuy || null, urgencia: lead.urgency?.level || null,
+    score: lead.score,
   }
 }
 
 function deriveMetrics(lead) {
-  const p = lead.digitalPresence
-  const base = p === 'sin-web' ? 8 : p === 'web-vieja' ? 32 : p === 'web-aceptable' ? 58 : 82
+  const fit = lead.machineFit
+  const base = fit === 'ideal' ? 90 : fit === 'alto' ? 72 : fit === 'medio' ? 50 : 26
+  const reviews = lead.signals?.reviewsCount || 0
   const clamp = (n) => Math.max(3, Math.min(98, Math.round(n)))
+  const size = clamp(Math.min(95, 20 + reviews * 0.6))
   return {
-    performance: clamp(base), seo: clamp(base - 6), ux: clamp(base + 2),
-    branding: clamp(base - 4), conversion: clamp(base - 10),
-    mobile: clamp(base - 4), trust: clamp(base + (lead.signals?.rating || 0) * 3),
+    ajusteRubro: clamp(base), volumen: size, capacidadPago: clamp((lead.signals?.website ? 55 : 30) + reviews * 0.2),
+    urgencia: clamp(base - 10), contactabilidad: clamp((lead.signals?.whatsapp ? 60 : 35) + (lead.signals?.instagram ? 20 : 0)),
+    competencia: clamp(45 + (fit === 'ideal' ? 25 : 0)), tamano: size,
   }
 }
 
-// eslint utilizado por HIGH_INTENT (reservado para scoring server-side futuro)
-export { HIGH_INTENT }
+// Reservado para scoring/consultas server-side futuras.
+export { INDUSTRIAL_RUBROS }

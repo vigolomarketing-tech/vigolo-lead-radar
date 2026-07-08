@@ -1,4 +1,4 @@
-# Vigolo Lead Radar — Backend / Proxy
+# 2GTech3D Lead Radar — Backend / Proxy
 
 Cloudflare Worker que protege las API keys de **Google Places** y **OpenAI**
 del lado del servidor y resuelve CORS. El frontend lo consume vía
@@ -16,7 +16,7 @@ proxy guarda las keys como *secrets* y expone endpoints seguros.
 | ------ | ---------------- | ------------------------------------ |
 | GET    | `/health`        | Estado + qué keys están configuradas |
 | POST   | `/places/search` | Google Places (New) Text Search      |
-| POST   | `/ai/analyze`    | Diagnóstico del negocio (OpenAI)     |
+| POST   | `/ai/analyze`    | Análisis de oportunidad de máquina     |
 | POST   | `/ai/message`    | Un mensaje de prospección            |
 | POST   | `/ai/messages`   | Set de mensajes                      |
 | POST   | `/ai/advisor`    | Asesor comercial                     |
@@ -41,7 +41,7 @@ npm run deploy
 ```
 
 Al terminar, Wrangler imprime la URL del Worker, por ejemplo:
-`https://vigolo-lead-radar-api.TU-SUBDOMINIO.workers.dev`
+`https://2gtech3d-lead-radar-api.TU-SUBDOMINIO.workers.dev`
 
 ## Conectar el frontend
 
@@ -50,7 +50,7 @@ En el frontend, configurá el `.env` (o las variables en Vercel/Pages):
 ```bash
 VITE_DATA_PROVIDER=google
 VITE_AI_PROVIDER=openai
-VITE_API_BASE_URL=https://vigolo-lead-radar-api.TU-SUBDOMINIO.workers.dev
+VITE_API_BASE_URL=https://2gtech3d-lead-radar-api.TU-SUBDOMINIO.workers.dev
 ```
 
 Rebuild del frontend y listo: los datos y la IA pasan a ser **reales**.
