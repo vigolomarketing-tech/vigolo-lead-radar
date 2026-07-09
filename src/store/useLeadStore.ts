@@ -7,6 +7,7 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { MOCK_LEADS } from '../services/providers/mockData'
 import { searchBusinesses } from '../services/providers/dataProvider'
+import { useSettings } from './useSettings'
 import { aiAnalyze } from '../services/ai/aiProvider'
 import { uid } from '../lib/id'
 import { levelFromScore } from '../lib/scoring'
@@ -55,6 +56,14 @@ function keepCrm(l: Lead): Partial<Lead> {
   }
 }
 
+/** Resumen que devuelven las búsquedas a la UI. */
+export interface SearchSummary {
+  count: number
+  source: 'google' | 'mock'
+  fellBack: boolean
+  note: string
+}
+
 interface LeadState {
   leads: Lead[]
   filters: LeadFiltersState
@@ -62,6 +71,10 @@ interface LeadState {
   isSearching: boolean
   searchError: string | null
   lastSearch: SearchParams | null
+  /** Origen de datos de la última búsqueda (para indicador 🟢/🟡). */
+  lastSource: 'google' | 'mock' | null
+  /** Mensaje legible sobre el origen de datos (respaldo, caché, etc.). */
+  searchNotice: string | null
   analyzingIds: string[]
   sweepProgress: { province: string; done: number; total: number } | null
   campaigns: Campaign[]
@@ -78,8 +91,8 @@ interface LeadState {
   resetFilters: () => void
   select: (id: string | null) => void
 
-  runSearch: (params: SearchParams) => Promise<number>
-  runNationwideSweep: (params: SearchParams) => Promise<number>
+  runSearch: (params: SearchParams) => Promise<SearchSummary>
+  runNationwideSweep: (params: SearchParams) => Promise<SearchSummary>
   analyze: (id: string) => Promise<void>
 
   updateLead: (id: string, patch: Partial<Lead>) => void
@@ -105,6 +118,8 @@ export const useLeadStore = create<LeadState>()(
       isSearching: false,
       searchError: null,
       lastSearch: null,
+      lastSource: null,
+      searchNotice: null,
       analyzingIds: [],
       sweepProgress: null,
       campaigns: [],
@@ -137,20 +152,32 @@ export const useLeadStore = create<LeadState>()(
 
       runSearch: async (params) => {
         set({ isSearching: true, searchError: null })
+        const mode = useSettings.getState().mode
         try {
-          const results = await searchBusinesses(params)
+          const outcome = await searchBusinesses(params, { mode })
           set((s) => {
             const map = new Map(s.leads.map((l) => [l.id, l]))
-            for (const r of results) {
+            for (const r of outcome.leads) {
               const existing = map.get(r.id)
               map.set(r.id, existing ? { ...r, ...keepCrm(existing) } : r)
             }
-            return { leads: Array.from(map.values()), lastSearch: params }
+            return {
+              leads: Array.from(map.values()),
+              lastSearch: params,
+              lastSource: outcome.source,
+              searchNotice: outcome.note,
+            }
           })
-          return results.length
+          return {
+            count: outcome.leads.length,
+            source: outcome.source,
+            fellBack: outcome.fellBack,
+            note: outcome.note,
+          }
         } catch (e) {
-          set({ searchError: e instanceof Error ? e.message : 'Error de búsqueda.' })
-          return 0
+          const note = e instanceof Error ? e.message : 'Error de búsqueda.'
+          set({ searchError: note })
+          return { count: 0, source: 'mock', fellBack: true, note }
         } finally {
           set({ isSearching: false })
         }
@@ -159,33 +186,46 @@ export const useLeadStore = create<LeadState>()(
       /** Barrido "toda Argentina": recorre provincia por provincia. */
       runNationwideSweep: async (params) => {
         set({ isSearching: true, searchError: null })
+        const mode = useSettings.getState().mode
         const provinces = ARGENTINA.map((p) => p.name)
         const acc = new Map<string, Lead>()
+        let googleHits = 0
         try {
           for (let i = 0; i < provinces.length; i++) {
             const province = provinces[i]
             set({ sweepProgress: { province, done: i, total: provinces.length } })
-            const results = await searchBusinesses({
-              ...params,
-              nationwide: false,
-              province,
-              city: '',
-              query: '',
-            })
-            for (const r of results) acc.set(r.id, r)
+            // maxPages: 1 por provincia para acotar costo/latencia del barrido.
+            const outcome = await searchBusinesses(
+              { ...params, nationwide: false, province, city: '', query: '' },
+              { mode, maxPages: 1 },
+            )
+            if (outcome.source === 'google') googleHits++
+            for (const r of outcome.leads) acc.set(r.id, r)
           }
+          const source: 'google' | 'mock' = googleHits > 0 ? 'google' : 'mock'
+          const fellBack = mode === 'real' && googleHits < provinces.length
+          const note =
+            source === 'google'
+              ? `Datos reales de Google · ${googleHits}/${provinces.length} provincias`
+              : 'Datos demo (respaldo) en todo el barrido'
           set((s) => {
             const map = new Map(s.leads.map((l) => [l.id, l]))
             for (const r of acc.values()) {
               const existing = map.get(r.id)
               map.set(r.id, existing ? { ...r, ...keepCrm(existing) } : r)
             }
-            return { leads: Array.from(map.values()), lastSearch: { ...params, nationwide: true } }
+            return {
+              leads: Array.from(map.values()),
+              lastSearch: { ...params, nationwide: true },
+              lastSource: source,
+              searchNotice: note,
+            }
           })
-          return acc.size
+          return { count: acc.size, source, fellBack, note }
         } catch (e) {
-          set({ searchError: e instanceof Error ? e.message : 'Error en el barrido nacional.' })
-          return acc.size
+          const note = e instanceof Error ? e.message : 'Error en el barrido nacional.'
+          set({ searchError: note })
+          return { count: acc.size, source: 'mock', fellBack: true, note }
         } finally {
           set({ isSearching: false, sweepProgress: null })
         }

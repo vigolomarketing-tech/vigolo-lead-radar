@@ -1,5 +1,5 @@
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, PresenceBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, PresenceBadge, SourceBadge, StageBadge } from '../../components/ui/badges'
 import { Card } from '../../components/ui/primitives'
 import { formatCurrency } from '../../lib/format'
 import { useLeadStore } from '../../store/useLeadStore'
@@ -22,6 +22,7 @@ export function LeadCard({ lead }: { lead: Lead }) {
         </div>
 
         <div className="flex flex-wrap gap-1.5">
+          <SourceBadge source={lead.source} />
           <OpportunityBadge score={lead.score} />
           <PresenceBadge presence={lead.digitalPresence} />
           <StageBadge stage={lead.stage} />

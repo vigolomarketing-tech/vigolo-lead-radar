@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Drawer } from '../../components/ui/Drawer'
 import { ScoreRing } from '../../components/ui/ScoreRing'
-import { OpportunityBadge, PresenceBadge, PriorityBadge, StageBadge } from '../../components/ui/badges'
+import { OpportunityBadge, PresenceBadge, PriorityBadge, SourceBadge, StageBadge } from '../../components/ui/badges'
 import { Button } from '../../components/ui/primitives'
 import { AnalysisPanel } from '../analysis/AnalysisPanel'
 import { MessagesPanel } from '../messages/MessagesPanel'
@@ -52,6 +52,7 @@ function DrawerBody({ lead, onClose }: { lead: Lead; onClose: () => void }) {
               <h2 className="text-lg font-bold text-slate-50">{lead.name}</h2>
               <p className="text-sm text-slate-400">{lead.category} · {lead.city}, {lead.province}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
+                <SourceBadge source={lead.source} />
                 <OpportunityBadge score={lead.score} />
                 <PresenceBadge presence={lead.digitalPresence} />
                 <StageBadge stage={lead.stage} />
@@ -128,8 +129,23 @@ function Overview({ lead }: { lead: Lead }) {
     ['Estado', lead.openingHours?.openNow === undefined ? undefined : lead.openingHours.openNow ? 'Abierto ahora' : 'Cerrado'],
     ['Maps', 'Ver en Google Maps', lead.mapsUrl],
   ]
+  const photos = lead.signals.photos?.filter(Boolean) ?? []
+  const weekday = lead.openingHours?.weekdayText ?? []
   return (
     <div className="space-y-4">
+      {photos.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto pb-1">
+          {photos.map((src, i) => (
+            <img
+              key={i}
+              src={src}
+              alt={`${lead.name} ${i + 1}`}
+              loading="lazy"
+              className="h-24 w-32 shrink-0 rounded-xl object-cover ring-1 ring-inset ring-white/10"
+            />
+          ))}
+        </div>
+      )}
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
         <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Datos del negocio</h4>
         <dl className="space-y-2 text-sm">
@@ -149,6 +165,16 @@ function Overview({ lead }: { lead: Lead }) {
           ))}
         </dl>
       </div>
+      {weekday.length > 0 && (
+        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+          <h4 className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">Horarios</h4>
+          <ul className="space-y-0.5 text-sm text-slate-300">
+            {weekday.map((d) => (
+              <li key={d}>{d}</li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
         <h4 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500">Oportunidad</h4>
         <p className="text-sm text-slate-300">{lead.scoreHeadline}</p>

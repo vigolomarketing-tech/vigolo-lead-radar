@@ -184,6 +184,7 @@ export interface Lead {
   // Metadata
   createdAt: string
   source: 'mock' | 'google'
+  placeId?: string // Google Place ID (solo datos reales)
 }
 
 // --- Búsqueda / filtros ---

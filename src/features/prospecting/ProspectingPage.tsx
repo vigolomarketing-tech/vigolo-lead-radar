@@ -14,18 +14,31 @@ export function ProspectingPage() {
   const categories = useCategories()
   const provinces = useProvinces()
   const { filters, setFilters, resetFilters } = useLeadStore()
-  const [feedback, setFeedback] = useState<string | null>(null)
+  const [feedback, setFeedback] = useState<{ text: string; source: 'google' | 'mock' } | null>(null)
 
   return (
     <AppShell title="Prospección" subtitle="Encontrá negocios en toda Argentina">
       <SearchFilters
-        onDone={(n) =>
-          setFeedback(n > 0 ? `Se encontraron ${n} negocios.` : 'Sin resultados con esos criterios.')
+        onDone={(s) =>
+          setFeedback({
+            source: s.source,
+            text:
+              s.count > 0
+                ? `${s.count} negocios · ${s.note}`
+                : `Sin resultados con esos criterios · ${s.note}`,
+          })
         }
       />
       {feedback && (
-        <p className="rounded-lg bg-electric-500/10 px-3 py-2 text-xs text-electric-200 ring-1 ring-inset ring-electric-400/20">
-          {feedback}
+        <p
+          className={
+            feedback.source === 'google'
+              ? 'rounded-lg bg-emerald-500/10 px-3 py-2 text-xs text-emerald-200 ring-1 ring-inset ring-emerald-400/20'
+              : 'rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-200 ring-1 ring-inset ring-amber-400/20'
+          }
+        >
+          {feedback.source === 'google' ? '🟢 ' : '🟡 '}
+          {feedback.text}
         </p>
       )}
 

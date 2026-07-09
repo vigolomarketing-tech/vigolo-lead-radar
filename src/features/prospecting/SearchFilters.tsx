@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import { Button, Card, Field, Input, Select, Spinner } from '../../components/ui/primitives'
-import { useLeadStore } from '../../store/useLeadStore'
-import { activeDataProvider } from '../../services/providers/dataProvider'
+import { useLeadStore, type SearchSummary } from '../../store/useLeadStore'
+import { useSettings } from '../../store/useSettings'
 import { CATEGORIES, PROVINCES, citiesOfProvince } from '../../config/argentina'
+import { cn } from '../../utils/cn'
 import type { SearchParams } from '../../types'
 
 const DEFAULTS: SearchParams = {
@@ -22,12 +23,13 @@ const DEFAULTS: SearchParams = {
   verifiedOnly: false,
 }
 
-export function SearchFilters({ onDone }: { onDone?: (count: number) => void }) {
+export function SearchFilters({ onDone }: { onDone?: (summary: SearchSummary) => void }) {
   const runSearch = useLeadStore((s) => s.runSearch)
   const runNationwideSweep = useLeadStore((s) => s.runNationwideSweep)
   const isSearching = useLeadStore((s) => s.isSearching)
   const searchError = useLeadStore((s) => s.searchError)
   const sweepProgress = useLeadStore((s) => s.sweepProgress)
+  const mode = useSettings((s) => s.mode)
   const [p, setP] = useState<SearchParams>(DEFAULTS)
   const set = (patch: Partial<SearchParams>) => setP((prev) => ({ ...prev, ...patch }))
 
@@ -35,12 +37,10 @@ export function SearchFilters({ onDone }: { onDone?: (count: number) => void }) 
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const n = await runSearch(p)
-    onDone?.(n)
+    onDone?.(await runSearch(p))
   }
   const nationwide = async () => {
-    const n = await runNationwideSweep(p)
-    onDone?.(n)
+    onDone?.(await runNationwideSweep(p))
   }
 
   return (
@@ -108,7 +108,10 @@ export function SearchFilters({ onDone }: { onDone?: (count: number) => void }) 
 
         <div className="flex flex-wrap items-center justify-between gap-3">
           <span className="text-xs text-slate-500">
-            Fuente: <span className="font-semibold text-electric-300">{activeDataProvider === 'google' ? 'Google Places' : 'Demo / Mock'}</span>
+            Modo:{' '}
+            <span className={cn('font-semibold', mode === 'real' ? 'text-emerald-300' : 'text-amber-300')}>
+              {mode === 'real' ? '🟢 Real (Google Places)' : '🟡 Demo'}
+            </span>
           </span>
           <div className="flex gap-2">
             <Button type="button" variant="secondary" onClick={nationwide} disabled={isSearching}>

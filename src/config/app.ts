@@ -24,8 +24,15 @@ export const PROVIDERS = {
   data: (env.VITE_DATA_PROVIDER ?? 'mock') as 'mock' | 'google',
   ai: (env.VITE_AI_PROVIDER ?? 'mock') as 'mock' | 'openai',
   /** Base URL del backend/proxy (ej: https://api.vigolo.dev). */
-  apiBaseUrl: env.VITE_API_BASE_URL ?? '',
+  apiBaseUrl: (env.VITE_API_BASE_URL ?? '').replace(/\/+$/, ''),
 } as const
+
+/**
+ * ¿Hay un backend/proxy configurado? Es condición necesaria (pero no
+ * suficiente: el backend además debe tener la GOOGLE_PLACES_API_KEY) para
+ * poder traer datos reales. Sin esto, la app siempre usa datos demo.
+ */
+export const BACKEND_CONFIGURED = Boolean(PROVIDERS.apiBaseUrl)
 
 /** Moneda para valores potenciales/reales del CRM. */
 export const CURRENCY = {
