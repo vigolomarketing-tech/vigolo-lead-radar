@@ -19,6 +19,8 @@ export interface RawBusiness {
   mapsUrl?: string
   categories?: string[]
   openNow?: boolean
+  weekdayText?: string[]
+  placeId?: string
   signals: BusinessSignals
   source?: 'mock' | 'google'
   // Estado inicial opcional (para poblar la demo)
@@ -77,8 +79,12 @@ export function buildLead(raw: RawBusiness, createdAt = '2026-07-01'): Lead {
       `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
         `${raw.name} ${raw.address}`,
       )}`,
-    openingHours: raw.openNow !== undefined ? { openNow: raw.openNow } : undefined,
+    openingHours:
+      raw.openNow !== undefined || raw.weekdayText
+        ? { openNow: raw.openNow, weekdayText: raw.weekdayText }
+        : undefined,
     categories: raw.categories,
+    placeId: raw.placeId,
     signals: raw.signals,
     score: scoring.score,
     scoreLevel: scoring.level,

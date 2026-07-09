@@ -9,6 +9,7 @@ import { AdvisorPage } from './features/advisor/AdvisorPage'
 import { IntegrationsPage } from './features/integrations/IntegrationsPage'
 import { LeadDrawer } from './features/leads/LeadDrawer'
 import { PwaControls } from './pwa/PwaControls'
+import { DataStatusBanner } from './components/layout/DataStatusBanner'
 import { Spinner } from './components/ui/primitives'
 
 // El mapa (leaflet) se carga bajo demanda para aligerar el bundle inicial.
@@ -49,6 +50,8 @@ export default function App() {
       <LeadDrawer />
       {/* PWA: banner offline + botón instalar */}
       <PwaControls />
+      {/* Aviso de credenciales/backend cuando Modo Real no tiene datos reales */}
+      <DataStatusBanner />
     </HashRouter>
   )
 }

@@ -32,3 +32,22 @@ export function PresenceBadge({ presence }: { presence: DigitalPresence }) {
 export function StageBadge({ stage }: { stage: CrmStage }) {
   return <Badge className={CRM_STAGE_STYLE[stage]}>{CRM_STAGE_LABEL[stage]}</Badge>
 }
+
+/** Indica claramente el origen del dato: 🟢 Google real / 🟡 Demo. */
+export function SourceBadge({ source }: { source: 'mock' | 'google' }) {
+  return source === 'google' ? (
+    <Badge
+      className="bg-emerald-500/15 text-emerald-300 ring-emerald-400/30"
+      title="Datos reales obtenidos de Google Places"
+    >
+      🟢 Datos reales de Google
+    </Badge>
+  ) : (
+    <Badge
+      className="bg-amber-500/15 text-amber-300 ring-amber-400/30"
+      title="Datos de demostración (no reales)"
+    >
+      🟡 Datos demo
+    </Badge>
+  )
+}

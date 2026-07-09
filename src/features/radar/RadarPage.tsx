@@ -35,7 +35,7 @@ export function RadarPage() {
       .sort((a, b) => b.score - a.score)
       .slice(0, 6)
       .map((l) => l.id)
-    setDone({ count: found, top })
+    setDone({ count: found.count, top })
   }
 
   const topLeads = done ? done.top.map((id) => leads.find((l) => l.id === id)!).filter(Boolean) : []

@@ -24,10 +24,11 @@ proceso comercial — desde un solo lugar.
 5. [Configurar OpenAI](#-configurar-openai)
 6. [Desplegar el backend (Cloudflare Worker)](#-desplegar-el-backend-cloudflare-worker)
 7. [Deploy del frontend](#-deploy-del-frontend)
-8. [Variables de entorno](#-variables-de-entorno)
-9. [Cómo usar cada función](#-cómo-usar-cada-función)
-10. [Arquitectura](#-arquitectura)
-11. [Roadmap / próximos pasos](#-roadmap--próximos-pasos)
+8. [Modo Real vs. Modo Demo](#-modo-real-vs-modo-demo)
+9. [Variables de entorno](#-variables-de-entorno)
+10. [Cómo usar cada función](#-cómo-usar-cada-función)
+11. [Arquitectura](#-arquitectura)
+12. [Roadmap / próximos pasos](#-roadmap--próximos-pasos)
 
 ---
 
@@ -172,16 +173,66 @@ Importá el repo en [vercel.com/new](https://vercel.com/new): build
 
 ### Conectar el backend real
 
-En las variables del frontend (`.env`, o Environment Variables en Pages/Vercel):
+En las variables del frontend (`.env`, o Environment Variables en Pages/Vercel)
+alcanza con **una** variable: la URL del backend.
 
 ```bash
-VITE_DATA_PROVIDER=google
-VITE_AI_PROVIDER=openai
 VITE_API_BASE_URL=https://vigolo-lead-radar-api.TU-SUBDOMINIO.workers.dev
 ```
 
-Rebuild y listo: datos e IA reales. **Si falta alguna credencial, la app cae
-sola al modo demo/local — nunca se rompe.**
+Rebuild y listo. Con eso, la app arranca en **Modo Real** y trae negocios
+reales de Google Places automáticamente. **Si falta alguna credencial o el
+backend no responde, cae sola a datos demo — nunca se rompe.**
+
+> `VITE_DATA_PROVIDER` / `VITE_AI_PROVIDER` siguen existiendo pero son
+> **opcionales/informativas**: el origen real de los datos lo decide el
+> selector Modo Real/Demo en runtime y la disponibilidad del backend.
+
+---
+
+## 🟢🟡 Modo Real vs. Modo Demo
+
+En la barra superior hay un **selector Modo Real / Modo Demo** (por defecto
+**Real**). Un punto de estado al lado indica si el backend está listo:
+🟢 verde = Google Places disponible, 🟡 ámbar = backend sin key/inalcanzable,
+⚪ gris = sin backend configurado.
+
+- **Modo Real** (default): usa **Google Places** vía el backend/proxy. Trae
+  nombre, dirección, teléfono, sitio web (o lo marca *Sin web*), rubro,
+  horarios, reseñas, rating, fotos, coordenadas y Place ID reales. Pagina con
+  `nextPageToken` para traer el máximo de resultados y **cachea** las búsquedas
+  recientes (15 min) para no consultar Google de más. Cae a demo solo si: **no
+  hay backend / no hay conexión / Google devuelve error**.
+- **Modo Demo**: siempre datos de demostración (respaldo), sin tocar Google.
+
+**Nunca hay confusión sobre el origen del dato:** cada lead muestra una insignia
+🟢 *Datos reales de Google* o 🟡 *Datos demo*, y cada búsqueda informa de dónde
+salieron los resultados (incluido si fue respaldo o caché).
+
+### Puesta en marcha para traer datos reales (paso a paso)
+
+1. **Google Cloud** → activá *Places API (New)* y creá una API Key
+   ([detalle arriba](#-configurar-google-places)). Restringí la key y ponele
+   límite de gasto.
+2. **(Opcional) OpenAI** → creá una API Key para análisis/mensajes con IA real.
+3. **Desplegá el backend** (Cloudflare Worker):
+   ```bash
+   cd server && npm install && npx wrangler login
+   npx wrangler secret put GOOGLE_PLACES_API_KEY   # pegás la key de Google
+   npx wrangler secret put OPENAI_API_KEY          # (opcional) key de OpenAI
+   npm run deploy
+   ```
+   Anotá la URL que imprime Wrangler y verificá:
+   `curl https://TU-WORKER.workers.dev/health` → debe responder
+   `{"ok":true,"places":true,...}`.
+4. **Configurá el frontend** con esa URL:
+   `VITE_API_BASE_URL=https://TU-WORKER.workers.dev` (en `.env` local, o en
+   Environment Variables de GitHub Pages / Vercel).
+5. **Rebuild/redeploy** el frontend. Al abrir la app, el punto de estado se pone
+   🟢 y las búsquedas en Modo Real ya traen negocios reales desde el primer uso.
+6. **Verificá:** buscá algo real (ej. *"barberías en Córdoba"*), abrí un lead y
+   confirmá que el nombre/dirección/teléfono existen en Google Maps; los que no
+   tienen web aparecen marcados como *Sin web* (oportunidad de venta).
 
 ---
 
@@ -228,9 +279,9 @@ barra del navegador). Se mantiene el mismo deploy de GitHub Pages.
 
 | Variable | Dónde | Para qué |
 | -------- | ----- | -------- |
-| `VITE_DATA_PROVIDER` | frontend | `mock` (demo) o `google` (real). |
+| `VITE_API_BASE_URL` | frontend | **URL del Worker backend.** Es lo único necesario para habilitar datos reales; el Modo Real está activo por defecto. |
+| `VITE_DATA_PROVIDER` | frontend | Opcional/informativa (`mock`/`google`). El origen real lo decide el selector Modo Real/Demo + disponibilidad del backend. |
 | `VITE_AI_PROVIDER` | frontend | `mock` (local) o `openai` (real). |
-| `VITE_API_BASE_URL` | frontend | URL del Worker backend. |
 | `VITE_AGENCY_NAME` | frontend | Nombre de la agencia en mensajes/auditorías. |
 | `VITE_AGENCY_SIGNATURE` | frontend | Firma al pie de los mensajes. |
 | `VITE_CURRENCY` / `VITE_DEFAULT_TICKET` | frontend | Moneda y ticket base del CRM. |

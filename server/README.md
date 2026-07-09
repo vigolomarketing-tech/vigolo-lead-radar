@@ -12,14 +12,24 @@ proxy guarda las keys como *secrets* y expone endpoints seguros.
 
 ## Endpoints
 
-| Método | Ruta             | Descripción                          |
-| ------ | ---------------- | ------------------------------------ |
-| GET    | `/health`        | Estado + qué keys están configuradas |
-| POST   | `/places/search` | Google Places (New) Text Search      |
-| POST   | `/ai/analyze`    | Diagnóstico del negocio (OpenAI)     |
-| POST   | `/ai/message`    | Un mensaje de prospección            |
-| POST   | `/ai/messages`   | Set de mensajes                      |
-| POST   | `/ai/advisor`    | Asesor comercial                     |
+| Método | Ruta             | Descripción                                        |
+| ------ | ---------------- | -------------------------------------------------- |
+| GET    | `/health`        | Estado + qué keys están configuradas               |
+| POST   | `/places/search` | Google Places (New) Text Search **con paginación** |
+| GET    | `/places/photo`  | Proxy de fotos de Places (oculta la key)           |
+| POST   | `/ai/analyze`    | Diagnóstico del negocio (OpenAI)                   |
+| POST   | `/ai/message`    | Un mensaje de prospección                          |
+| POST   | `/ai/messages`   | Set de mensajes                                    |
+| POST   | `/ai/advisor`    | Asesor comercial                                   |
+
+### `/places/search`
+
+Recorre hasta `maxPages` (1–5, default 3) usando `nextPageToken` para traer el
+máximo de resultados por búsqueda. Devuelve por negocio: nombre, dirección,
+teléfono, sitio web (o vacío → *sin web*), rubro, horarios (`weekdayText`),
+reseñas, rating, estado, coordenadas, **Place ID** y URLs de **fotos** (que
+pasan por `/places/photo`, sin exponer la key). Incluye timeout y logs por
+consola. Si una página falla pero ya hay resultados, devuelve lo acumulado.
 
 ## Deploy (5 minutos)
 
@@ -45,17 +55,18 @@ Al terminar, Wrangler imprime la URL del Worker, por ejemplo:
 
 ## Conectar el frontend
 
-En el frontend, configurá el `.env` (o las variables en Vercel/Pages):
+En el frontend, configurá el `.env` (o las variables en Vercel/Pages). Con la
+URL del backend alcanza — el **Modo Real** está activo por defecto:
 
 ```bash
-VITE_DATA_PROVIDER=google
-VITE_AI_PROVIDER=openai
 VITE_API_BASE_URL=https://vigolo-lead-radar-api.TU-SUBDOMINIO.workers.dev
+# opcionales: VITE_AI_PROVIDER=openai (para IA real)
 ```
 
-Rebuild del frontend y listo: los datos y la IA pasan a ser **reales**.
-Si falta alguna key, el frontend cae automáticamente al modo demo/local, así
-que la app **nunca se rompe** por credenciales faltantes.
+Rebuild del frontend y listo: los datos (y la IA, si la configurás) pasan a ser
+**reales**. Si falta alguna key o el backend no responde, el frontend cae
+automáticamente a datos demo, así que la app **nunca se rompe** por credenciales
+faltantes. El selector Modo Real/Demo de la barra superior permite forzar demo.
 
 ## Notas
 

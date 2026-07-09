@@ -3,7 +3,8 @@
 // ---------------------------------------------------------------------
 // Protege las API keys (Google Places + OpenAI) del lado del servidor y
 // resuelve CORS. El frontend (VITE_API_BASE_URL) llama estos endpoints:
-//   POST /places/search   → Google Places (New) Text Search + mapeo
+//   POST /places/search   → Google Places (New) Text Search + paginación
+//   GET  /places/photo    → proxy de fotos de Google Places (con la key)
 //   POST /ai/analyze      → OpenAI: diagnóstico del negocio
 //   POST /ai/message      → OpenAI: 1 mensaje
 //   POST /ai/messages     → OpenAI: set de mensajes
@@ -15,6 +16,17 @@
 // Vars (wrangler.toml):
 //   OPENAI_MODEL (default gpt-4o-mini), ALLOWED_ORIGIN (CORS)
 // =====================================================================
+
+/** Timeout para llamadas salientes (evita colgar el Worker). */
+async function fetchWithTimeout(url, options = {}, ms = 15000) {
+  const ctrl = new AbortController()
+  const timer = setTimeout(() => ctrl.abort(), ms)
+  try {
+    return await fetch(url, { ...options, signal: ctrl.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
 
 const HIGH_INTENT = ['barberia','peluqueria','gimnasio','estetica','spa','restaurante','cafeteria','bar','inmobiliaria','electricista','plomero','ferreteria','odontologia','consultorio','abogado','contador','veterinaria','turismo','hotel','indumentaria']
 
@@ -48,10 +60,16 @@ export default {
           openai: Boolean(env.OPENAI_API_KEY),
         }, env)
       }
+      // Proxy de fotos (GET): stream de la imagen desde Google con la key.
+      if (url.pathname === '/places/photo' && request.method === 'GET') {
+        return placesPhoto(url, env)
+      }
       if (request.method !== 'POST') return json({ error: 'Method not allowed' }, env, 405)
       const body = await request.json().catch(() => ({}))
 
-      if (url.pathname === '/places/search') return json(await placesSearch(body, env), env)
+      if (url.pathname === '/places/search') {
+        return json(await placesSearch(body, env, url.origin), env)
+      }
       if (url.pathname === '/ai/analyze') return json(await aiAnalyze(body, env), env)
       if (url.pathname === '/ai/message') return json(await aiMessage(body, env), env)
       if (url.pathname === '/ai/messages') return json(await aiMessages(body, env), env)
@@ -59,6 +77,7 @@ export default {
 
       return json({ error: 'Not found' }, env, 404)
     } catch (err) {
+      console.error('[worker] error en', url.pathname, '→', String(err?.message || err))
       return json({ error: String(err?.message || err) }, env, 500)
     }
   },
@@ -68,39 +87,60 @@ export default {
 // Google Places (New) — Text Search
 // https://developers.google.com/maps/documentation/places/web-service/text-search
 // --------------------------------------------------------------------
-async function placesSearch(params, env) {
+const PLACES_FIELD_MASK = [
+  'places.id','places.displayName','places.formattedAddress','places.location',
+  'places.rating','places.userRatingCount','places.websiteUri',
+  'places.internationalPhoneNumber','places.nationalPhoneNumber',
+  'places.googleMapsUri','places.types','places.regularOpeningHours',
+  'places.primaryTypeDisplayName','places.businessStatus','places.photos',
+  'nextPageToken',
+].join(',')
+
+async function placesSearch(params, env, origin) {
   if (!env.GOOGLE_PLACES_API_KEY) throw new Error('Falta GOOGLE_PLACES_API_KEY en el backend.')
   const loc = [params.city, params.province, 'Argentina'].filter(Boolean).join(', ')
   const textQuery = `${params.category || 'negocios'} en ${params.query || loc}`
+  const maxPages = Math.max(1, Math.min(5, Number(params.maxPages) || 3))
 
-  const res = await fetch('https://places.googleapis.com/v1/places:searchText', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
-      'X-Goog-FieldMask': [
-        'places.displayName','places.formattedAddress','places.location',
-        'places.rating','places.userRatingCount','places.websiteUri',
-        'places.internationalPhoneNumber','places.nationalPhoneNumber',
-        'places.googleMapsUri','places.types','places.regularOpeningHours',
-        'places.primaryTypeDisplayName','places.businessStatus',
-      ].join(','),
-    },
-    body: JSON.stringify({
-      textQuery,
-      languageCode: 'es',
-      regionCode: 'AR',
-      maxResultCount: 20,
-      ...(params.minRating ? { minRating: params.minRating } : {}),
-      ...(params.openNow ? { openNow: true } : {}),
-    }),
-  })
-  if (!res.ok) throw new Error(`Google Places ${res.status}: ${await res.text()}`)
-  const data = await res.json()
-  const places = data.places || []
+  // Paginación: recorremos hasta `maxPages` usando nextPageToken.
+  const places = []
+  let pageToken
+  let pages = 0
+  for (; pages < maxPages; pages++) {
+    const res = await fetchWithTimeout('https://places.googleapis.com/v1/places:searchText', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': env.GOOGLE_PLACES_API_KEY,
+        'X-Goog-FieldMask': PLACES_FIELD_MASK,
+      },
+      body: JSON.stringify({
+        textQuery,
+        languageCode: 'es',
+        regionCode: 'AR',
+        maxResultCount: 20,
+        ...(params.minRating ? { minRating: params.minRating } : {}),
+        ...(params.openNow ? { openNow: true } : {}),
+        ...(pageToken ? { pageToken } : {}),
+      }),
+    })
+    if (!res.ok) {
+      const body = await res.text()
+      // Si ya juntamos algo, devolvemos lo que hay; si no, lanzamos error.
+      console.error(`[places] ${res.status} en página ${pages + 1}: ${body}`)
+      if (places.length) break
+      throw new Error(`Google Places ${res.status}: ${body}`)
+    }
+    const data = await res.json()
+    for (const p of data.places || []) places.push(p)
+    pageToken = data.nextPageToken
+    if (!pageToken) { pages++; break }
+  }
+
+  console.log(`[places] "${textQuery}" → ${places.length} resultados (${pages} pág.)`)
 
   return places
-    .map((p) => mapPlace(p, params))
+    .map((p) => mapPlace(p, params, origin))
     .filter((r) => {
       if (params.minReviews && (r.signals.reviewsCount || 0) < params.minReviews) return false
       if (params.hasWebsite === 'yes' && !r.signals.website) return false
@@ -111,7 +151,16 @@ async function placesSearch(params, env) {
     })
 }
 
-function mapPlace(p, params) {
+/** Construye URLs de foto que pasan por nuestro proxy (oculta la key). */
+function photoUrls(photos, origin) {
+  if (!Array.isArray(photos) || !origin) return undefined
+  const urls = photos.slice(0, 4).map((ph) =>
+    `${origin}/places/photo?name=${encodeURIComponent(ph.name)}&max=800`,
+  )
+  return urls.length ? urls : undefined
+}
+
+function mapPlace(p, params, origin) {
   const name = p.displayName?.text || 'Negocio'
   const category = p.primaryTypeDisplayName?.text || params.category || 'Negocio'
   const website = p.websiteUri || undefined
@@ -126,6 +175,8 @@ function mapPlace(p, params) {
     mapsUrl: p.googleMapsUri,
     categories: p.types,
     openNow: p.regularOpeningHours?.openNow,
+    weekdayText: p.regularOpeningHours?.weekdayDescriptions,
+    placeId: p.id,
     source: 'google',
     signals: {
       website,
@@ -136,8 +187,31 @@ function mapPlace(p, params) {
       reviewsCount: p.userRatingCount || 0,
       rating: p.rating || 0,
       verified: p.businessStatus === 'OPERATIONAL',
+      photos: photoUrls(p.photos, origin),
     },
   }
+}
+
+// --------------------------------------------------------------------
+// Proxy de fotos: /places/photo?name=<photoName>&max=800
+// Redirige a la imagen real de Google Places (New) usando la API key.
+// --------------------------------------------------------------------
+async function placesPhoto(url, env) {
+  if (!env.GOOGLE_PLACES_API_KEY) return json({ error: 'Falta GOOGLE_PLACES_API_KEY.' }, env, 500)
+  const name = url.searchParams.get('name')
+  if (!name) return json({ error: 'Falta el parámetro name.' }, env, 400)
+  const max = Math.max(64, Math.min(1600, Number(url.searchParams.get('max')) || 800))
+  const media = `https://places.googleapis.com/v1/${name}/media?maxWidthPx=${max}&key=${env.GOOGLE_PLACES_API_KEY}`
+  const res = await fetchWithTimeout(media, { redirect: 'follow' })
+  if (!res.ok) return json({ error: `Foto ${res.status}` }, env, res.status)
+  return new Response(res.body, {
+    status: 200,
+    headers: {
+      'Content-Type': res.headers.get('Content-Type') || 'image/jpeg',
+      'Cache-Control': 'public, max-age=86400',
+      ...corsHeaders(env),
+    },
+  })
 }
 
 // --------------------------------------------------------------------

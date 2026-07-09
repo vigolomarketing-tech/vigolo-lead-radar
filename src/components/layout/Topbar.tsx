@@ -1,7 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { Brand } from './Sidebar'
-import { activeDataProvider } from '../../services/providers/dataProvider'
-import { activeAiProvider } from '../../services/ai/aiProvider'
+import { ModeSwitcher } from './ModeSwitcher'
 import { cn } from '../../utils/cn'
 
 const MOBILE_NAV = [
@@ -26,16 +25,7 @@ export function Topbar({ title, subtitle }: { title: string; subtitle?: string }
           <h1 className="text-lg font-bold text-slate-50">{title}</h1>
           {subtitle && <p className="text-xs text-slate-500">{subtitle}</p>}
         </div>
-        <div className="flex items-center gap-2 text-[11px]">
-          <span className="hidden items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-slate-400 ring-1 ring-inset ring-white/10 sm:inline-flex">
-            <span className={cn('h-1.5 w-1.5 rounded-full', activeDataProvider === 'google' ? 'bg-emerald-400' : 'bg-amber-400')} />
-            Datos: {activeDataProvider === 'google' ? 'Google' : 'Demo'}
-          </span>
-          <span className="hidden items-center gap-1 rounded-full bg-white/5 px-2.5 py-1 text-slate-400 ring-1 ring-inset ring-white/10 sm:inline-flex">
-            <span className={cn('h-1.5 w-1.5 rounded-full', activeAiProvider === 'openai' ? 'bg-emerald-400' : 'bg-amber-400')} />
-            IA: {activeAiProvider === 'openai' ? 'OpenAI' : 'Local'}
-          </span>
-        </div>
+        <ModeSwitcher />
       </div>
       {/* Nav mobile */}
       <nav className="flex gap-1 overflow-x-auto px-4 pb-2 lg:hidden">
