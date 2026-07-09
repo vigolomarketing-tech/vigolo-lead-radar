@@ -5,10 +5,10 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vitejs.dev/config/
 //
 // base:
-//  - GitHub Pages sirve el sitio en una subruta (/vigolo-lead-radar/), por eso
+//  - GitHub Pages sirve el sitio en una subruta (/2gtech3d-lead-radar/), por eso
 //    el build de Pages usa ese base. El workflow lo setea con VITE_BASE.
 //  - En Vercel / dominio raiz, base = '/' (default).
-//  Nota: el base absoluto ('/vigolo-lead-radar/') es mas robusto que './' en
+//  Nota: el base absoluto ('/2gtech3d-lead-radar/') es mas robusto que './' en
 //  GitHub Pages (evita problemas de rutas y de subpaths).
 export default defineConfig({
   base: process.env.VITE_BASE || '/',

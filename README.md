@@ -10,6 +10,11 @@ fibra, una grabadora de metal/piedra o una CNC CO2. La herramienta detecta el
 rubro, recomienda la máquina ideal, puntúa el potencial de compra, valida la
 calidad del lead y genera el mensaje comercial listo para enviar.
 
+🔗 **Producción:** <https://vigolomarketing-tech.github.io/2gtech3d-lead-radar/>
+
+> Herramienta **independiente** de Vigolo Lead Radar (que sigue en su propio
+> repo/URL para vender páginas web). Esta es exclusivamente para máquinas.
+
 </div>
 
 ---
@@ -176,7 +181,7 @@ scoring, la máquina recomendada y los mensajes funcionan igual con datos reales
 | `VITE_API_BASE_URL` | frontend | URL del Worker backend. |
 | `VITE_AGENCY_NAME` / `VITE_AGENCY_*` | frontend | Nombre y contacto de 2GTech3D en mensajes/propuestas. |
 | `VITE_CURRENCY` / `VITE_DEFAULT_TICKET` | frontend | Moneda (ARS) y ticket base. |
-| `VITE_BASE` | build | `/vigolo-lead-radar/` (Pages) o `/` (Vercel). |
+| `VITE_BASE` | build | `/2gtech3d-lead-radar/` (Pages) o `/` (Vercel). |
 | `GOOGLE_PLACES_API_KEY` | backend (secret) | Key de Google Places. |
 | `OPENAI_API_KEY` / `OPENAI_MODEL` | backend | IA real (default `gpt-4o-mini`). |
 | `ALLOWED_ORIGIN` | backend | CORS (dominio del front o `*`). |
